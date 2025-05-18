@@ -3,6 +3,13 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Дополнительные правила
+
+# Visual Studio Template Engine Host cache
+TemplateEngineHost/vs/
+
+# Конец допольнительных правил
+
 # dotenv files
 .env
 
