@@ -1,6 +1,6 @@
 ﻿using EnigmaVault.AuthenticationService.Application.Abstractions.Hashers;
 using EnigmaVault.AuthenticationService.Application.Abstractions.Repositories;
-using EnigmaVault.AuthenticationService.Application.DTOs;
+using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
 using EnigmaVault.AuthenticationService.Application.Enums;
 using EnigmaVault.AuthenticationService.Application.Implementations.UseCases;
 using EnigmaVault.AuthenticationService.Domain.DomainModels;
@@ -52,7 +52,7 @@ namespace MyApplication.Tests
             var emailAddressResult = EmailAddress.TryCreate(command.Email, out var emailAddressVo);
             var phoneNumberResult = PhoneNumber.TryCreate(command.Phone, out var phoneNumberVo);
 
-            var userDomain = UserDomain.Create(0, loginResultVo, command.UserName, "hashedPassword", emailAddressVo, phoneNumberVo, 1, 1, 1, 1).User;
+            var userDomain = UserDomain.Create(loginResultVo, command.UserName, "hashedPassword", emailAddressVo, phoneNumberVo, 1, 1, 1, 1).User;
 
             _userRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<UserDomain>())).ReturnsAsync(userDomain);
 
@@ -86,7 +86,7 @@ namespace MyApplication.Tests
             var emailAddressResult = EmailAddress.TryCreate(command.Email, out var emailAddressVo);
             var phoneNumberResult = PhoneNumber.TryCreate(command.Phone, out var phoneNumberVo);
 
-            var userDomain = UserDomain.Create(0, loginResultVo, command.UserName, "hashedPassword", emailAddressVo, phoneNumberVo, 1, 1, 1, 1).User;
+            var userDomain = UserDomain.Create(loginResultVo, command.UserName, "hashedPassword", emailAddressVo, phoneNumberVo, 1, 1, 1, 1).User;
 
             _userRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<UserDomain>())).ReturnsAsync(userDomain);
 

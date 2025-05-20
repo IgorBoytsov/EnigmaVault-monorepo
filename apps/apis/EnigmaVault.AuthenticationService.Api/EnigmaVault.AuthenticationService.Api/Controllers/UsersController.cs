@@ -4,7 +4,10 @@ using EnigmaVault.AuthenticationService.Api.Mappers;
 using EnigmaVault.AuthenticationService.Application.Abstractions.Providers;
 using EnigmaVault.AuthenticationService.Application.Abstractions.UseCases;
 using EnigmaVault.AuthenticationService.Application.DTOs;
+using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
+using EnigmaVault.AuthenticationService.Application.DTOs.Results;
 using EnigmaVault.AuthenticationService.Application.Enums;
+using EnigmaVault.AuthenticationService.Application.Implementations.Providers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnigmaVault.AuthenticationService.Api.Controllers
@@ -14,13 +17,19 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IRegisterUserUseCase _registerUserUseCase;
-        private readonly IRegistrationErrorMessageProvider _registrationErrorMessageProvider;
+        private readonly IAuthenticateUserUseCase _authenticateUserUseCase;
+        private readonly IDefaultErrorMessageProvider _registrationErrorMessageProvider;
+        private readonly IDefaultErrorMessageProvider _authenticateErrorMessageProvider;
 
         public UsersController(IRegisterUserUseCase registerUserUseCase,
-                               IRegistrationErrorMessageProvider registrationErrorMessageProvider)
+                               IAuthenticateUserUseCase authenticateUserUseCase,
+                               IEnumerable<IDefaultErrorMessageProvider> messagesPrivier)
         {
             _registerUserUseCase = registerUserUseCase;
-            _registrationErrorMessageProvider = registrationErrorMessageProvider;
+            _authenticateUserUseCase = authenticateUserUseCase;
+
+            _registrationErrorMessageProvider = messagesPrivier.OfType<DefaultRegistrationErrorMessageProvider>().FirstOrDefault()!;
+            _authenticateErrorMessageProvider = messagesPrivier.OfType<DefaultAuthenticateErrorMessageProvider>().FirstOrDefault()!;
         }
 
         /*--Регистрация-----------------------------------------------------------------------------------*/
@@ -36,7 +45,7 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
 
             RegisterUserCommand command = apiRequest.ToMapCommand();
 
-            RegisterUserResult result = await _registerUserUseCase.RegisterAsync(command);
+            UserResult result = await _registerUserUseCase.RegisterAsync(command);
 
             if (!result.Success)
             {
@@ -104,8 +113,118 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
                 return errorResponseFunc.Invoke();
             }
 
-            return StatusCode(StatusCodes.Status201Created, result.User);
+            return StatusCode(StatusCodes.Status201Created);
             //return Created("", result.User);
+        }
+
+        //TODO: Добавить JWT токен
+        [HttpPost("authenticate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Authenticate([FromBody] AuthenticateUserApiRequest apiRequest)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            UserDto user;
+            AuthenticateUserCommand command = apiRequest.ToMapCommand();
+
+            try
+            {
+                UserResult result = await _authenticateUserUseCase.Authenticate(command);
+
+                if (!result.Success)
+                {
+                    Func<IActionResult> errorResponseFunc = result.ErrorCode switch
+                    {
+                        // Ошибки валидации
+                        ErrorCode.ValidationFailed =>
+                        () =>
+                        {
+                            if (result.ValidationErrors.Any())
+                            {
+                                var problemDetails = new ValidationProblemDetails
+                                {
+                                    Title = result.ErrorMessage,
+                                    Status = StatusCodes.Status400BadRequest,
+                                    Detail = "Вы не правильно указали данные в полях.",
+                                };
+
+                                problemDetails.Errors.Add("ValidationErrors", result.ValidationErrors.ToArray());
+
+                                return BadRequest(problemDetails);
+                            }
+
+                            return BadRequest(new ErrorResponse
+                            {
+                                ErrorCode = result.ErrorCode.ToString()!,
+                                Message = result.ErrorMessage ?? _authenticateErrorMessageProvider.GetMessage(result.ErrorCode.Value)
+                            });
+                        }
+                        ,
+                        //Конфликт данных в бд
+                        ErrorCode.LoginNotExist =>
+                        () =>
+                        {
+                            return Conflict(new ErrorResponse
+                            {
+                                ErrorCode = result.ErrorCode.ToString()!,
+                                Message = result.ErrorMessage ?? _authenticateErrorMessageProvider.GetMessage(result.ErrorCode.Value),
+                            });
+                        }
+                        ,
+                        ErrorCode.InvalidPassword =>
+                        () =>
+                        {
+                            return BadRequest(new ErrorResponse
+                            {
+                                ErrorCode = result.ErrorCode?.ToString() ?? ErrorCode.UnknownError.ToString(),
+                                Message = result.ErrorMessage!
+                            });
+                        }
+                        ,
+                        // Ошибки, указывающие на проблемы на стороне сервера
+                        ErrorCode.UnknownError or _ =>
+                        () =>
+                        {
+                            //TODO: Добавить логи
+                            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                            {
+                                ErrorCode = result.ErrorCode?.ToString() ?? ErrorCode.UnknownError.ToString(),
+                                Message = "Во время аутентификации произошла непредвиденная ошибка. Пожалуйста, попробуйте позже."
+                            });
+                        }
+                    };
+                    return errorResponseFunc.Invoke();
+                }
+
+                user = result.User!;
+            }
+            catch (Exception)
+            {
+                //TODO: Добавить логи
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                {
+                    ErrorCode = ErrorCode.UnknownError.ToString(),
+                    Message = "Во время аутентификации произошла непредвиденная ошибка. Пожалуйста, попробуйте позже либо обратитесь в поддержку"
+                });
+            }
+
+            var userAuthResponse = new UserAuthenticateResponse
+            {
+                IdUser = user.IdUser,
+                Login = user.Login,
+                UserName = user.UserName,
+                Email = user.Email,
+                Phone = user.Phone,
+                IdCountry = user.IdCountry,
+                IdGender = user.IdGender,
+            };
+
+            return StatusCode(StatusCodes.Status200OK, userAuthResponse);
+            //return Ok(userAuthResponse);
         }
     }
 }

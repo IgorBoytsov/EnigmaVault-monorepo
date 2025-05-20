@@ -1,5 +1,5 @@
 ﻿using EnigmaVault.AuthenticationService.Api.DTOs.Requests;
-using EnigmaVault.AuthenticationService.Application.DTOs;
+using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
 
 namespace EnigmaVault.AuthenticationService.Api.Mappers
 {

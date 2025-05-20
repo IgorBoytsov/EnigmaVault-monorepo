@@ -6,6 +6,7 @@
         /// Выбрать при отсутствие надобности ошибки.
         /// </summary>
         None,
+
         // Общие ошибки
 
         /// <summary>
@@ -28,6 +29,10 @@
         /// </summary>
         LoginAlreadyTaken,
         /// <summary>
+        /// Когда логина не существует.
+        /// </summary>
+        LoginNotExist,
+        /// <summary>
         /// Когда почта уже используется в системе.
         /// </summary>
         EmailAlreadyRegistered, 
@@ -39,6 +44,10 @@
         /// Пароль не соответствует минимальным требованием безопасности.
         /// </summary>
         WeakPassword,
+        /// <summary>
+        /// Если пароль не совпадает с нужным.
+        /// </summary>
+        InvalidPassword,
         /// <summary>
         /// Когда у пользователя указана не корректная роль.
         /// </summary>

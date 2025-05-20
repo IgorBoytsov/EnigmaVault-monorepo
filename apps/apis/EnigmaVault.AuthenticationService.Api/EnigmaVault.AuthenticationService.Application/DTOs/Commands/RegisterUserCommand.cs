@@ -1,4 +1,4 @@
-﻿namespace EnigmaVault.AuthenticationService.Application.DTOs
+﻿namespace EnigmaVault.AuthenticationService.Application.DTOs.Commands
 {
     public class RegisterUserCommand
     {

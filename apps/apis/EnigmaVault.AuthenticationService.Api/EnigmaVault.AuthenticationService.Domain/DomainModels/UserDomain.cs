@@ -24,7 +24,7 @@ namespace EnigmaVault.AuthenticationService.Domain.DomainModels
         public int? IdRole { get; private set; }
 
         public static (UserDomain? User, List<string>? Errors) Create(
-            int idUser, Login? login, string? userName,
+            Login? login, string? userName,
             string passwordHash,
             EmailAddress? email, PhoneNumber? phone,
             int? idStatusAccount, int? idGender, int? idCountry, int? idRole)
@@ -84,7 +84,6 @@ namespace EnigmaVault.AuthenticationService.Domain.DomainModels
 
             var user = new UserDomain()
             {
-                IdUser = idUser,
                 Login = login!.Value,
                 UserName = userName!,
                 PasswordHash = passwordHash,
@@ -100,6 +99,29 @@ namespace EnigmaVault.AuthenticationService.Domain.DomainModels
             };
 
             return (user, errors);
+        }
+
+        public static UserDomain Reconstitute(
+            int idUser, string login, string userName, string passwordHash, string email, string? phone,
+            DateTime dateRegistration, DateTime dateEntry, DateTime dateUpdate,
+            int? idStatusAccount, int? idGender, int? idCountry, int? idRole)
+        {
+            return new UserDomain()
+            {
+                IdUser = idUser,
+                Login = login,
+                UserName = userName,
+                PasswordHash = passwordHash,
+                Email = email,
+                Phone = phone,
+                DateRegistration = dateRegistration,
+                DateEntry = dateEntry,
+                DateUpdate = dateUpdate,
+                IdStatusAccount = idStatusAccount,
+                IdGender = idGender,
+                IdCountry = idCountry,
+                IdRole = idRole
+            };
         }
     }
 }

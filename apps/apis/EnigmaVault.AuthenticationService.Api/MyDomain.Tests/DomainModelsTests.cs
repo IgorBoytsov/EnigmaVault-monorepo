@@ -21,7 +21,7 @@ namespace MyDomain.Tests
             PhoneNumber.TryCreate(phone, out var phoneNumberVo);
             var passwordHash = passwordHasher.HashPassword(password);
 
-            var (User, Message) = UserDomain.Create(0, loginResultVo!, userName, passwordHash, emailAddressVo!, phoneNumberVo, 1, 1, 1, 1);
+            var (User, Message) = UserDomain.Create(loginResultVo!, userName, passwordHash, emailAddressVo!, phoneNumberVo, 1, 1, 1, 1);
 
             Assert.That(User, Is.Not.Null);
         }
@@ -41,7 +41,7 @@ namespace MyDomain.Tests
             PhoneNumber.TryCreate(phone, out PhoneNumber? phoneNumberVo);
             var passwordHash = passwordHasher.HashPassword(password);
 
-            var (User, Message) = UserDomain.Create(0, loginResultVo, userName, passwordHash, emailAddressVo, phoneNumberVo, 1, 1, 1, 1);
+            var (User, Message) = UserDomain.Create(loginResultVo, userName, passwordHash, emailAddressVo, phoneNumberVo, 1, 1, 1, 1);
 
             Assert.That(User, Is.Null);
         }

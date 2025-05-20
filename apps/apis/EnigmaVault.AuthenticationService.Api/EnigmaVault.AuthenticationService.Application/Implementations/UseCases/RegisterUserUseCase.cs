@@ -1,7 +1,8 @@
 ﻿using EnigmaVault.AuthenticationService.Application.Abstractions.Hashers;
 using EnigmaVault.AuthenticationService.Application.Abstractions.Repositories;
 using EnigmaVault.AuthenticationService.Application.Abstractions.UseCases;
-using EnigmaVault.AuthenticationService.Application.DTOs;
+using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
+using EnigmaVault.AuthenticationService.Application.DTOs.Results;
 using EnigmaVault.AuthenticationService.Application.Enums;
 using EnigmaVault.AuthenticationService.Application.Mappers;
 using EnigmaVault.AuthenticationService.Domain.Constants;
@@ -25,7 +26,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
 
         /*--Создание пользователя-------------------------------------------------------------------------*/
 
-        public async Task<RegisterUserResult> RegisterAsync(RegisterUserCommand command)
+        public async Task<UserResult> RegisterAsync(RegisterUserCommand command)
         {
             var validationErrors = new List<string>();
 
@@ -65,18 +66,18 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
             #endregion
 
             if (validationErrors.Any())
-                return RegisterUserResult.ValidationFailureResult(validationErrors, "Ошибки валидации.");
+                return UserResult.ValidationFailureResult(validationErrors, "Ошибки валидации.");
 
             #region Валидация через БД
 
             if (loginVo != null && await _userRepository.ExistsByLoginAsync(command.Login))
-                return RegisterUserResult.FailureResult(ErrorCode.LoginAlreadyTaken, $"Логин {command.Login} уже занят, придумайте другой.");
+                return UserResult.FailureResult(ErrorCode.LoginAlreadyTaken, $"Логин {command.Login} уже занят, придумайте другой.");
 
             if (emailVo != null && await _userRepository.ExistsByEmailAsync(command.Email))
-                return RegisterUserResult.FailureResult(ErrorCode.EmailAlreadyRegistered, $"Пользователь с таким адресом электронной почты: {command.Email} уже существует. Если не помните пароль, то попробуйте восстановить его.");
+                return UserResult.FailureResult(ErrorCode.EmailAlreadyRegistered, $"Пользователь с таким адресом электронной почты: {command.Email} уже существует. Если не помните пароль, то попробуйте восстановить его.");
 
             if (emailVo != null && await _userRepository.ExistsByPhoneAsync(command.Phone))
-                return RegisterUserResult.FailureResult(ErrorCode.PhoneAlreadyRegistered, $"Пользователь с таким номером телефона: {command.Phone} уже существует. Если не помните пароль, то попробуйте восстановить его.");
+                return UserResult.FailureResult(ErrorCode.PhoneAlreadyRegistered, $"Пользователь с таким номером телефона: {command.Phone} уже существует. Если не помните пароль, то попробуйте восстановить его.");
 
             #endregion
 
@@ -96,7 +97,6 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
             #region Создание и проверка домейн сущьности
 
             var (Domain, Message) = UserDomain.Create(
-                0,
                 loginVo!,
                 command.UserName,
                 passwordHash,
@@ -108,7 +108,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
                 defaultRoleId);
 
             if (Domain is null)
-                return RegisterUserResult.FailureResult(ErrorCode.DomainCreationError, "Ошибка создание домен модели.");
+                return UserResult.FailureResult(ErrorCode.DomainCreationError, "Ошибка создание домен модели.");
 
             #endregion
 
@@ -117,16 +117,16 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
                 var createdUserDomain = await _userRepository.CreateAsync(Domain);
 
                 if (createdUserDomain is null)
-                    return RegisterUserResult.FailureResult(ErrorCode.SaveUserError, "Ошибка сохранение пользователя.");
+                    return UserResult.FailureResult(ErrorCode.SaveUserError, "Ошибка сохранение пользователя.");
 
                 var userDto = createdUserDomain.ToDto();
 
-                return RegisterUserResult.SuccessResult(userDto);
+                return UserResult.SuccessResult(userDto);
             }
             catch (Exception)
             {
                 //TODO: Сделать логирование ошибки
-                return RegisterUserResult.FailureResult(ErrorCode.UnknownError, "Во время регистрации произошла непредвиденная ошибка");
+                return UserResult.FailureResult(ErrorCode.UnknownError, "Во время регистрации произошла непредвиденная ошибка");
             }
         }
     }

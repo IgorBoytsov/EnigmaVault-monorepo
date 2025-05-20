@@ -40,7 +40,7 @@ namespace MyInfrastructure.Tests
             var phoneNumberResult = PhoneNumber.TryCreate(phone, out var phoneNumberVo);
             var passwordHash = passwordHasher.HashPassword(password);
 
-            var (User, DomainErrors) = UserDomain.Create(0, loginResultVo, userName, passwordHash, emailAddressVo, phoneNumberVo, 1, 1, 1, 1);
+            var (User, DomainErrors) = UserDomain.Create(loginResultVo, userName, passwordHash, emailAddressVo, phoneNumberVo, 1, 1, 1, 1);
 
             if (DomainErrors is not null)
                 for (int i = 0; i < loginResult.Errors.Count; i++)
@@ -108,6 +108,35 @@ namespace MyInfrastructure.Tests
             });
 
             Assert.That(userInDb.IdUser, Is.GreaterThan(0));
+        }
+
+        /*--Get-------------------------------------------------------------------------------------------*/
+
+        [Test]
+        public async Task GetHashByLoginAsync_ShouldFindHash_AndReturnTheExactStoredHash() 
+        {
+            string plainPassword = "StrongPassword11!!"; 
+            string login = "SecondLogin"; 
+
+            var user = CreateSampleUserDomain(login: login, password: plainPassword);
+            string expectedHash = user.PasswordHash;
+
+            await _userRepository.CreateAsync(user);
+
+            var actualStoredHash = await _userRepository.GetHashByLoginAsync(user.Login);
+
+            TestContext.Out.WriteLine($"Ожидаемый хеш: {expectedHash}");
+            TestContext.Out.WriteLine($"Хэш из БД: {actualStoredHash}");
+
+            Assert.That(actualStoredHash, Is.EqualTo(expectedHash));
+        }
+
+        [Test]
+        public void GetHashByLoginAsync_ShouldFindHash_AndNotReturnTheExactStoredHash_AndThrowsArgumentNullException()
+        {
+            var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => await _userRepository.GetHashByLoginAsync("login"));
+
+            Assert.That(ex.ParamName, Is.EqualTo("Пользователь не найден."));
         }
 
         /*--Login-----------------------------------------------------------------------------------------*/

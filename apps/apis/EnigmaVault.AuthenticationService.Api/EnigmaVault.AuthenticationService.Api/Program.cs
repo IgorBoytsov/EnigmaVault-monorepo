@@ -33,9 +33,14 @@ namespace EnigmaVault.AuthenticationService.Api
                 options.UseSqlServer(connectionString));
 
             builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
+            builder.Services.AddScoped<IAuthenticateUserUseCase, AuthenticateUserUseCase>();
+            builder.Services.AddScoped<IGetUserByLoginUseCase, GetUserByLoginUseCase>();
+
             builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-            builder.Services.AddSingleton<IRegistrationErrorMessageProvider, DefaultRegistrationErrorMessageProvider>();
+            builder.Services.AddSingleton<IDefaultErrorMessageProvider, DefaultRegistrationErrorMessageProvider>();
+            builder.Services.AddSingleton<IDefaultErrorMessageProvider, DefaultAuthenticateErrorMessageProvider>();
+
             builder.Services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
 
             #endregion

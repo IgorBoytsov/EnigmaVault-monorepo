@@ -2,7 +2,7 @@
 
 namespace EnigmaVault.AuthenticationService.Application.Abstractions.Providers
 {
-    public interface IRegistrationErrorMessageProvider
+    public interface IDefaultErrorMessageProvider
     {
         string GetMessage(ErrorCode errorCode);
     }
