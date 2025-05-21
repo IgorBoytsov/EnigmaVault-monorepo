@@ -11,6 +11,6 @@ namespace EnigmaVault.AuthenticationService.Application.Abstractions.UseCases
         /// <param name="command"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        Task<UserResult> Authenticate(AuthenticateUserCommand command);
+        Task<UserResult> AuthenticateAsync(AuthenticateUserCommand command);
     }
 }

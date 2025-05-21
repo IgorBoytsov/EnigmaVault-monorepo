@@ -10,6 +10,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.Provider
             return errorCode switch
             {
                 ErrorCode.LoginNotExist => "Такого логина не существует.",
+                ErrorCode.EmailNotExist => "Такой почты не существует.",
                 ErrorCode.InvalidPassword => "Указан не верный пароль.",
                 ErrorCode.ValidationFailed => "Одно или несколько полей не прошли валидацию.",
                 ErrorCode.DomainCreationError => "Ошибка при создании доменного объекта пользователя.",

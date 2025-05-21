@@ -18,15 +18,18 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
     {
         private readonly IRegisterUserUseCase _registerUserUseCase;
         private readonly IAuthenticateUserUseCase _authenticateUserUseCase;
+        private readonly IRecoveryAccessUserUseCase _recoveryAccessUserUseCase;
         private readonly IDefaultErrorMessageProvider _registrationErrorMessageProvider;
         private readonly IDefaultErrorMessageProvider _authenticateErrorMessageProvider;
 
         public UsersController(IRegisterUserUseCase registerUserUseCase,
                                IAuthenticateUserUseCase authenticateUserUseCase,
+                               IRecoveryAccessUserUseCase recoveryAccessUserUseCase,
                                IEnumerable<IDefaultErrorMessageProvider> messagesPrivier)
         {
             _registerUserUseCase = registerUserUseCase;
             _authenticateUserUseCase = authenticateUserUseCase;
+            _recoveryAccessUserUseCase = recoveryAccessUserUseCase;
 
             _registrationErrorMessageProvider = messagesPrivier.OfType<DefaultRegistrationErrorMessageProvider>().FirstOrDefault()!;
             _authenticateErrorMessageProvider = messagesPrivier.OfType<DefaultAuthenticateErrorMessageProvider>().FirstOrDefault()!;
@@ -117,6 +120,8 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
             //return Created("", result.User);
         }
 
+        /*--Авторизация-----------------------------------------------------------------------------------*/
+
         //TODO: Добавить JWT токен
         [HttpPost("authenticate")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -133,7 +138,7 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
 
             try
             {
-                UserResult result = await _authenticateUserUseCase.Authenticate(command);
+                UserResult result = await _authenticateUserUseCase.AuthenticateAsync(command);
 
                 if (!result.Success)
                 {
@@ -225,6 +230,102 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
 
             return StatusCode(StatusCodes.Status200OK, userAuthResponse);
             //return Ok(userAuthResponse);
+        }
+
+        /*--Восстановление доступа------------------------------------------------------------------------*/
+
+        [HttpPost("recovery-access")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> RecoveryAccess([FromBody] RecoveryAccessUserApiRequest apiRequest)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            RecoveryAccessUserCommand command = apiRequest.ToCommand();
+
+            try
+            {
+                var result = await _recoveryAccessUserUseCase.RecoveryAccessAsync(command);
+
+                if (!result.Success)
+                {
+                    Func<IActionResult> errorResponseFunc = result.ErrorCode switch
+                    {
+                        // Ошибки валидации
+                        ErrorCode.ValidationFailed =>
+                        () =>
+                        {
+                            if (result.ValidationErrors.Any())
+                            {
+                                var problemDetails = new ValidationProblemDetails
+                                {
+                                    Title = result.ErrorMessage,
+                                    Status = StatusCodes.Status400BadRequest,
+                                    Detail = "Не правильно указан логин, почта, либо пароль не соответствует мерам безопасности.",
+                                };
+
+                                problemDetails.Errors.Add("ValidationErrors", result.ValidationErrors.ToArray());
+
+                                return BadRequest(problemDetails);
+                            }
+
+                            return BadRequest(new ErrorResponse
+                            {
+                                ErrorCode = result.ErrorCode.ToString()!,
+                                Message = result.ErrorMessage ?? _authenticateErrorMessageProvider.GetMessage(result.ErrorCode.Value)
+                            });
+                        }
+                        ,
+                        //Конфликт данных в бд
+                        ErrorCode.LoginNotExist =>
+                        () =>
+                        {
+                            return Conflict(new ErrorResponse
+                            {
+                                ErrorCode = result.ErrorCode.ToString()!,
+                                Message = result.ErrorMessage ?? _authenticateErrorMessageProvider.GetMessage(result.ErrorCode.Value),
+                            });
+                        }
+                        ,
+                        ErrorCode.EmailNotExist =>
+                        () =>
+                        {
+                            return Conflict(new ErrorResponse
+                            {
+                                ErrorCode = result.ErrorCode.ToString()!,
+                                Message = result.ErrorMessage ?? _authenticateErrorMessageProvider.GetMessage(result.ErrorCode.Value),
+                            });
+                        }
+                        ,
+                        // Ошибки, указывающие на проблемы на стороне сервера
+                        ErrorCode.SaveUserError or ErrorCode.UnknownError or _ =>
+                        () =>
+                        {
+                            //TODO: Добавить логи
+                            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                            {
+                                ErrorCode = result.ErrorCode?.ToString() ?? ErrorCode.UnknownError.ToString(),
+                                Message = "Во время восстановление пароля произошла непредвиденная ошибка. Пожалуйста, попробуйте позже."
+                            });
+                        }
+                    };
+                    return errorResponseFunc.Invoke();
+                }
+            }
+            catch (Exception)
+            {
+                //TODO: Добавить логи
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                {
+                    ErrorCode = ErrorCode.UnknownError.ToString(),
+                    Message = "Во время восстановление данных произошла непредвиденная ошибка. Пожалуйста, попробуйте позже либо обратитесь в поддержку"
+                });
+            }
+
+            return StatusCode(StatusCodes.Status200OK, true);
         }
     }
 }

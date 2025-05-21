@@ -49,6 +49,7 @@ namespace MyApplication.Tests
         public void AuthenticateErrorMessageProvider_GetMessage_ReturnsStringMessage()
         {
             var loginNotExist = _authenticateErrorMessageProvider.GetMessage(ErrorCode.LoginNotExist);
+            var emailNotExist = _authenticateErrorMessageProvider.GetMessage(ErrorCode.EmailNotExist);
             var invalidPassword = _authenticateErrorMessageProvider.GetMessage(ErrorCode.InvalidPassword);
             var validationFailed = _authenticateErrorMessageProvider.GetMessage(ErrorCode.ValidationFailed);
             var domainCreationError = _authenticateErrorMessageProvider.GetMessage(ErrorCode.DomainCreationError);
@@ -58,6 +59,7 @@ namespace MyApplication.Tests
             Assert.Multiple(() =>
             {
                 Assert.That(loginNotExist, Is.EqualTo("Такого логина не существует."));
+                Assert.That(emailNotExist, Is.EqualTo("Такой почты не существует."));
                 Assert.That(invalidPassword, Is.EqualTo("Указан не верный пароль."));
                 Assert.That(validationFailed, Is.EqualTo("Одно или несколько полей не прошли валидацию."));
                 Assert.That(domainCreationError, Is.EqualTo("Ошибка при создании доменного объекта пользователя."));

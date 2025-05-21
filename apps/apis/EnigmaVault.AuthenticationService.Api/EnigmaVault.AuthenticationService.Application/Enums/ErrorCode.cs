@@ -33,6 +33,10 @@
         /// </summary>
         LoginNotExist,
         /// <summary>
+        /// Когда почты не существует.
+        /// </summary>
+        EmailNotExist,
+        /// <summary>
         /// Когда почта уже используется в системе.
         /// </summary>
         EmailAlreadyRegistered, 

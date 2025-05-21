@@ -15,12 +15,12 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
             _userRepository = userRepository;
         }
 
-        public async Task<UserResult> GetUserByLogin(string login)
+        public async Task<UserResult> GetUserByLoginAsync(string login)
         {
             if (string.IsNullOrWhiteSpace(login))
                 return UserResult.FailureResult(ErrorCode.ValidationFailed, "Не был указан логин.");
 
-            var gettingUserDomain = await _userRepository.GetUserByLogin(login);
+            var gettingUserDomain = await _userRepository.GetUserByLoginAsync(login);
 
             if (gettingUserDomain is null)
                 return UserResult.FailureResult(ErrorCode.SaveUserError, "Ошибка получения пользователя.");

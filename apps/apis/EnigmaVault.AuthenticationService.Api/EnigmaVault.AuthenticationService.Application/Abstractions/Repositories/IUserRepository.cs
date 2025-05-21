@@ -17,7 +17,9 @@ namespace EnigmaVault.AuthenticationService.Application.Abstractions.Repositorie
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         Task<string> GetHashByLoginAsync(string login);
-        Task<UserDomain?> GetUserByLogin(string login);
+        Task<UserDomain?> GetUserByLoginAsync(string login);
+        Task<bool> UpdatePasswordAsync(string login, string email, string newHash);
+        Task<bool> UpdateDateEntryAsync(int id);
 
         /*--Exist-----------------------------------------------------------------------------------------*/
 

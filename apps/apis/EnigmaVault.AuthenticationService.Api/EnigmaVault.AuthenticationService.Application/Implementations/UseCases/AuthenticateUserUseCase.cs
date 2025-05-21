@@ -20,7 +20,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
             _passwordHasher = passwordHasher;
         }
 
-        public async Task<UserResult> Authenticate(AuthenticateUserCommand command)
+        public async Task<UserResult> AuthenticateAsync(AuthenticateUserCommand command)
         {
             if (command is null)
                 throw new ArgumentNullException($"Значение {nameof(command)} было пустым.");
@@ -40,7 +40,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
 
             try
             {
-                var userDomain = await _userRepository.GetUserByLogin(command.Login);
+                var userDomain = await _userRepository.GetUserByLoginAsync(command.Login);
 
                 if (userDomain is null) 
                     return UserResult.FailureResult(ErrorCode.LoginNotExist, "Пользователь не был найден во время процесса аутентификации.");
@@ -50,6 +50,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
                 if (!verifiablePassword)
                     return UserResult.FailureResult(ErrorCode.InvalidPassword, "Указан не верный пароль.");
 
+                await _userRepository.UpdateDateEntryAsync(userDomain.IdUser);
                 return UserResult.SuccessResult(userDomain.ToDto());
 
             }

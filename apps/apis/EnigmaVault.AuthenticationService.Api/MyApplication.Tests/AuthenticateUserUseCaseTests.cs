@@ -71,10 +71,10 @@ namespace MyApplication.Tests
             var command = CreateSampleAuthenticateUserCommand();
 
             _userRepositoryMock.Setup(r => r.ExistsByLoginAsync(It.IsAny<string>())).ReturnsAsync(true);
-            _userRepositoryMock.Setup(r => r.GetUserByLogin(It.IsAny<string>())).ReturnsAsync(userDomain);
+            _userRepositoryMock.Setup(r => r.GetUserByLoginAsync(It.IsAny<string>())).ReturnsAsync(userDomain);
             _passwordHasherMock.Setup(h => h.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
-            var userResult = await _useCase.Authenticate(command);
+            var userResult = await _useCase.AuthenticateAsync(command);
 
             Assert.That(userResult, Is.Not.Null);
             Assert.That(userResult.Success, Is.True);
@@ -85,7 +85,7 @@ namespace MyApplication.Tests
         {
             var command = CreateSampleAuthenticateUserCommand(login: string.Empty, password: string.Empty);
 
-            var userResult = await _useCase.Authenticate(command);
+            var userResult = await _useCase.AuthenticateAsync(command);
 
             if (userResult.ValidationErrors.Any())
                 for (int i = 0; i < userResult.ValidationErrors.Count; i++)
@@ -105,7 +105,7 @@ namespace MyApplication.Tests
 
              _userRepositoryMock.Setup(u => u.ExistsByLoginAsync(It.IsAny<string>())).ReturnsAsync(false);
 
-            var userResult = await _useCase.Authenticate(command);
+            var userResult = await _useCase.AuthenticateAsync(command);
 
             TestContext.Out.WriteLine($"Ошибка: {userResult.ErrorMessage}");
 
@@ -124,10 +124,10 @@ namespace MyApplication.Tests
             var command = CreateSampleAuthenticateUserCommand();
 
             _userRepositoryMock.Setup(r => r.ExistsByLoginAsync(It.IsAny<string>())).ReturnsAsync(true);
-            _userRepositoryMock.Setup(r => r.GetUserByLogin(It.IsAny<string>())).ReturnsAsync(userDomain);
+            _userRepositoryMock.Setup(r => r.GetUserByLoginAsync(It.IsAny<string>())).ReturnsAsync(userDomain);
             _passwordHasherMock.Setup(h => h.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
 
-            var userResult = await _useCase.Authenticate(command);
+            var userResult = await _useCase.AuthenticateAsync(command);
 
             Assert.That(userResult, Is.Not.Null);
             Assert.That(userResult.User, Is.Null);
@@ -143,10 +143,10 @@ namespace MyApplication.Tests
             var command = CreateSampleAuthenticateUserCommand();
 
             _userRepositoryMock.Setup(r => r.ExistsByLoginAsync(It.IsAny<string>())).ReturnsAsync(true);
-            _userRepositoryMock.Setup(r => r.GetUserByLogin(It.IsAny<string>())).Throws(new Exception("Исключение"));
+            _userRepositoryMock.Setup(r => r.GetUserByLoginAsync(It.IsAny<string>())).Throws(new Exception("Исключение"));
             _passwordHasherMock.Setup(h => h.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
-            var userResult = await _useCase.Authenticate(command);
+            var userResult = await _useCase.AuthenticateAsync(command);
 
             Assert.That(userResult, Is.Not.Null);
             Assert.That(userResult.User, Is.Null);
@@ -161,7 +161,7 @@ namespace MyApplication.Tests
         {
             AuthenticateUserCommand command = null!;
 
-            var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => await _useCase.Authenticate(command));
+            var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => await _useCase.AuthenticateAsync(command));
 
             Assert.That(ex.ParamName, Is.EqualTo($"Значение {nameof(command)} было пустым."));
         }

@@ -34,6 +34,7 @@ namespace EnigmaVault.AuthenticationService.Api
 
             builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
             builder.Services.AddScoped<IAuthenticateUserUseCase, AuthenticateUserUseCase>();
+            builder.Services.AddScoped<IRecoveryAccessUserUseCase, RecoveryAccessUserUseCase>();
             builder.Services.AddScoped<IGetUserByLoginUseCase, GetUserByLoginUseCase>();
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();

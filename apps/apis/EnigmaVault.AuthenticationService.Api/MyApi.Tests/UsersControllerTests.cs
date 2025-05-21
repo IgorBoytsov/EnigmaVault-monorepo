@@ -18,7 +18,8 @@ namespace MyApi.Tests
     {
         private Mock<IRegisterUserUseCase> _registerUseCaseMock;
         private Mock<IAuthenticateUserUseCase> _authenticateUserUseCaseMock;
-        private Mock<IDefaultErrorMessageProvider> _defaultErrorMessageProvider;
+        private Mock<IRecoveryAccessUserUseCase> _recoveryAccessUserUseCaseMock;
+        private Mock<IDefaultErrorMessageProvider> _defaultErrorMessageProviderMock;
         private UsersController _controller;
 
         [SetUp]
@@ -26,9 +27,10 @@ namespace MyApi.Tests
         {
             _registerUseCaseMock = new Mock<IRegisterUserUseCase>();
             _authenticateUserUseCaseMock = new Mock<IAuthenticateUserUseCase>();
-            _defaultErrorMessageProvider = new Mock<IDefaultErrorMessageProvider>();
+            _recoveryAccessUserUseCaseMock = new Mock<IRecoveryAccessUserUseCase>();
+            _defaultErrorMessageProviderMock = new Mock<IDefaultErrorMessageProvider>();
 
-            _controller = new UsersController(_registerUseCaseMock.Object, _authenticateUserUseCaseMock.Object, new List<IDefaultErrorMessageProvider>());
+            _controller = new UsersController(_registerUseCaseMock.Object, _authenticateUserUseCaseMock.Object, _recoveryAccessUserUseCaseMock.Object, new List<IDefaultErrorMessageProvider>() {new DefaultRegistrationErrorMessageProvider(), new DefaultAuthenticateErrorMessageProvider()});
         }
 
         private static RegisterUserApiRequest CreateSampleRegisterUserApiRequest(string? login = "LightPlay", string? userName = "Игорь", string password = "ValidPass123.!", string? email = "ValidEmail@yandex.ru", string? phone = "+7004001010")
@@ -51,6 +53,16 @@ namespace MyApi.Tests
             {
                 Login = login,
                 Password = password,
+            };
+        }
+
+        private static RecoveryAccessUserApiRequest CreateSampleRecoveryAccessUserApiRequest(string? login = "LightPlay", string email = "test@example.com", string newPassword = "ValidPass123.!")
+        {
+            return new RecoveryAccessUserApiRequest()
+            {
+                Login = login,
+                Email = email,
+                NewPassword = newPassword,
             };
         }
 
@@ -115,7 +127,7 @@ namespace MyApi.Tests
             var result = UserResult.ValidationFailureResult(validationErrors, "Ошибки валидации");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.ValidationFailed)).Returns("Ошибка валидации данных");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.ValidationFailed)).Returns("Ошибка валидации данных");
 
             var actionResult = await _controller.Register(apiRequest);
             var badRequestResult = (BadRequestObjectResult)actionResult;
@@ -136,7 +148,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.ValidationFailed, "Ошибки валидации");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.ValidationFailed)).Returns("Ошибка валидации данных");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.ValidationFailed)).Returns("Ошибка валидации данных");
 
             var actionResult = await _controller.Register(apiRequest);
             var badRequestResult = (BadRequestObjectResult)actionResult;
@@ -157,7 +169,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.LoginAlreadyTaken, "Логин TestLogin уже занят.");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.LoginAlreadyTaken)).Returns("Этот логин уже занят.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.LoginAlreadyTaken)).Returns("Этот логин уже занят.");
 
             var actionResult = await _controller.Register(apiRequest);
             var conflictRequestResult = (ConflictObjectResult)actionResult;
@@ -180,7 +192,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.EmailAlreadyRegistered, "Почта TestEmail@yandex.com уже занята.");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.EmailAlreadyRegistered)).Returns("Эта почта уже занята.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.EmailAlreadyRegistered)).Returns("Эта почта уже занята.");
 
             var actionResult = await _controller.Register(apiRequest);
             var conflictRequestResult = (ConflictObjectResult)actionResult;
@@ -203,7 +215,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.PhoneAlreadyRegistered, "Номер 80004001010 уже используется.");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.PhoneAlreadyRegistered)).Returns("Номер уже используется.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.PhoneAlreadyRegistered)).Returns("Номер уже используется.");
 
             var actionResult = await _controller.Register(apiRequest);
             var conflictRequestResult = (ConflictObjectResult)actionResult;
@@ -226,7 +238,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.WeakPassword, "Ваш пароль слишком легкий.");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.WeakPassword)).Returns("Недостаточная безопасность пароля.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.WeakPassword)).Returns("Недостаточная безопасность пароля.");
 
             var actionResult = await _controller.Register(apiRequest);
             var badRequestResult = (BadRequestObjectResult)actionResult;
@@ -249,7 +261,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.InvalidRole, "Не верно указанная роль в системе.");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.InvalidRole)).Returns("В запросе пришла не верная роль.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.InvalidRole)).Returns("В запросе пришла не верная роль.");
 
             var actionResult = await _controller.Register(apiRequest);
             var badRequestResult = (BadRequestObjectResult)actionResult;
@@ -272,7 +284,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.InvalidAccountStatus, "Не верно указанный статус аккаунта в системе.");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.InvalidAccountStatus)).Returns("В запросе пришел не верный статус акаунта.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.InvalidAccountStatus)).Returns("В запросе пришел не верный статус акаунта.");
 
             var actionResult = await _controller.Register(apiRequest);
             var badRequestResult = (BadRequestObjectResult)actionResult;
@@ -295,7 +307,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.DomainCreationError, "Произошла ошибка при создание данных.");
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.DomainCreationError)).Returns("Произошла ошибка при создание домен данных.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.DomainCreationError)).Returns("Произошла ошибка при создание домен данных.");
 
             var actionResult = await _controller.Register(apiRequest);
             var badRequestResult = (BadRequestObjectResult)actionResult;
@@ -318,7 +330,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.SaveUserError);
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.SaveUserError)).Returns("Произошла ошибка при сохранение данных в хранилище.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.SaveUserError)).Returns("Произошла ошибка при сохранение данных в хранилище.");
 
             var actionResult = await _controller.Register(apiRequest);
             var badObjectResult = (ObjectResult)actionResult;
@@ -341,7 +353,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.UnknownError);
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.UnknownError)).Returns("Произошла неизвестная ошибка!.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.UnknownError)).Returns("Произошла неизвестная ошибка!.");
 
             var actionResult = await _controller.Register(apiRequest);
             var badObjectResult = (ObjectResult)actionResult;
@@ -364,7 +376,7 @@ namespace MyApi.Tests
             var result = UserResult.FailureResult(ErrorCode.None);
 
             _registerUseCaseMock.Setup(u => u.RegisterAsync(It.IsAny<RegisterUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.None)).Returns("Произошла непредвиденная ошибка!!.");
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.None)).Returns("Произошла непредвиденная ошибка!!.");
 
             var actionResult = await _controller.Register(apiRequest);
             var badObjectResult = (ObjectResult)actionResult;
@@ -389,7 +401,7 @@ namespace MyApi.Tests
             var userDto = CreateSampleUserDto();
             var result = UserResult.SuccessResult(userDto);
 
-            _authenticateUserUseCaseMock.Setup(u => u.Authenticate(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
+            _authenticateUserUseCaseMock.Setup(u => u.AuthenticateAsync(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
 
             var actionResult = await _controller.Authenticate(apiRequest);
             var authResult = (ObjectResult)actionResult;
@@ -425,8 +437,8 @@ namespace MyApi.Tests
             var validationErrors = new List<string> { "Вы не заполнили поле с логинов", "Пароль слишком слабый)))))", };
             var result = UserResult.ValidationFailureResult(validationErrors, "Ошибки валидации");
 
-            _authenticateUserUseCaseMock.Setup(u => u.Authenticate(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.ValidationFailed)).Returns("Ошибка валидации данных");
+            _authenticateUserUseCaseMock.Setup(u => u.AuthenticateAsync(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.ValidationFailed)).Returns("Ошибка валидации данных");
 
             var actionResult = await _controller.Authenticate(apiRequest);
             var badRequestResult = (BadRequestObjectResult)actionResult;
@@ -446,8 +458,8 @@ namespace MyApi.Tests
 
             var result = UserResult.FailureResult(ErrorCode.LoginNotExist, "Логина TestLogin не существует.");
 
-            _authenticateUserUseCaseMock.Setup(u => u.Authenticate(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.LoginNotExist)).Returns("Этот логин уже занят.");
+            _authenticateUserUseCaseMock.Setup(u => u.AuthenticateAsync(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.LoginNotExist)).Returns("Этот логин уже занят.");
 
             var actionResult = await _controller.Authenticate(apiRequest);
             var conflictRequestResult = (ConflictObjectResult)actionResult;
@@ -469,8 +481,8 @@ namespace MyApi.Tests
 
             var result = UserResult.FailureResult(ErrorCode.InvalidPassword, "Пароль не совпадает.");
 
-            _authenticateUserUseCaseMock.Setup(u => u.Authenticate(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.InvalidPassword)).Returns("Пароли не равны.");
+            _authenticateUserUseCaseMock.Setup(u => u.AuthenticateAsync(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.InvalidPassword)).Returns("Пароли не равны.");
 
             var actionResult = await _controller.Authenticate(apiRequest);
             var conflictRequestResult = (BadRequestObjectResult)actionResult;
@@ -492,8 +504,8 @@ namespace MyApi.Tests
 
             var result = UserResult.FailureResult(ErrorCode.UnknownError);
 
-            _authenticateUserUseCaseMock.Setup(u => u.Authenticate(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
-            _defaultErrorMessageProvider.Setup(p => p.GetMessage(ErrorCode.UnknownError)).Returns("Произошла неизвестная ошибка!.");
+            _authenticateUserUseCaseMock.Setup(u => u.AuthenticateAsync(It.IsAny<AuthenticateUserCommand>())).ReturnsAsync(result);
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.UnknownError)).Returns("Произошла неизвестная ошибка!.");
 
             var actionResult = await _controller.Authenticate(apiRequest);
             var badObjectResult = (ObjectResult)actionResult;
@@ -513,7 +525,7 @@ namespace MyApi.Tests
         {
             var apiRequest = CreateSampleAuthenticateUserApiRequest();
 
-            _authenticateUserUseCaseMock.Setup(u => u.Authenticate(It.IsAny<AuthenticateUserCommand>())).Throws( new ArgumentNullException());
+            _authenticateUserUseCaseMock.Setup(u => u.AuthenticateAsync(It.IsAny<AuthenticateUserCommand>())).Throws( new ArgumentNullException());
 
             var actionResult = await _controller.Authenticate(apiRequest);
             var badObjectResult = (ObjectResult)actionResult;
@@ -526,6 +538,152 @@ namespace MyApi.Tests
             Assert.That(badObjectResult.StatusCode, Is.EqualTo(500));
             Assert.That(errorResponse.ErrorCode, Is.EqualTo("UnknownError"));
             Assert.That(errorResponse.Message, Is.EqualTo("Во время аутентификации произошла непредвиденная ошибка. Пожалуйста, попробуйте позже либо обратитесь в поддержку"));
+        }
+
+        /*--Recovery Access-------------------------------------------------------------------------------*/
+
+        [Test]
+        public async Task RecoveryAccess_ValidRequest_ReturnsStatus200OKWithTrue()
+        {
+            var apiRequest = CreateSampleRecoveryAccessUserApiRequest();
+            var result = UserResult.SuccessResult();
+
+            _recoveryAccessUserUseCaseMock.Setup(u => u.RecoveryAccessAsync(It.IsAny<RecoveryAccessUserCommand>())).ReturnsAsync(result);
+
+            var actionResult = await _controller.RecoveryAccess(apiRequest);
+            var authResult = (ObjectResult)actionResult;
+            var authResponse = (bool)authResult.Value!;
+
+            TestContext.Out.WriteLine(authResponse);
+
+            Assert.That(actionResult, Is.TypeOf<ObjectResult>(), "Должен вернуться ObjectResult.");
+            Assert.That(authResult.StatusCode, Is.EqualTo(200), "Статус код должен быть 200.");
+            Assert.That(authResult.Value, Is.Not.Null, "Значение не должно быть пустым");
+            Assert.That(authResult.Value, Is.TypeOf<bool>(), "Тип должен быть bool");
+        }
+
+        [Test]
+        public async Task RecoveryAccess_InvalidModelState_ReturnsBadRequest()
+        {
+            var apiRequest = CreateSampleRegisterUserApiRequest();
+            _controller.ModelState.AddModelError("Login", "Логина не существует");
+
+            var actionResult = await _controller.Register(apiRequest);
+            var badRequestResult = (BadRequestObjectResult)actionResult;
+
+            Assert.That(actionResult, Is.TypeOf<BadRequestObjectResult>(), "Должен вернуться BadRequest (400) статус");
+            Assert.That(badRequestResult.StatusCode, Is.EqualTo(400), "Статус код должен быть 400");
+            Assert.That(badRequestResult.Value, Is.TypeOf<SerializableError>(), "Должен вернуть ModelState ошибку");
+        }
+
+        [Test]
+        public async Task RecoveryAccess_ValidationFailed_ReturnsBadRequestWithValidationErrors()
+        {
+            var apiRequest = CreateSampleRecoveryAccessUserApiRequest(login: " ");
+
+            var validationErrors = new List<string> { "Вы не заполнили поле с логинов", "Пароль слишком слабый)))))", };
+            var result = UserResult.ValidationFailureResult(validationErrors, "Ошибки валидации");
+
+            _recoveryAccessUserUseCaseMock.Setup(u => u.RecoveryAccessAsync(It.IsAny<RecoveryAccessUserCommand>())).ReturnsAsync(result);
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.ValidationFailed)).Returns("Ошибка валидации данных");
+
+            var actionResult = await _controller.RecoveryAccess(apiRequest);
+            var badRequestResult = (BadRequestObjectResult)actionResult;
+            var problemDetails = (ValidationProblemDetails)badRequestResult.Value!;
+
+            Assert.That(actionResult, Is.TypeOf<BadRequestObjectResult>());
+            Assert.That(badRequestResult.StatusCode, Is.EqualTo(400));
+            Assert.That(problemDetails.Title, Is.EqualTo("Ошибки валидации"));
+            Assert.That(problemDetails.Errors["ValidationErrors"], Contains.Item("Вы не заполнили поле с логинов"));
+            Assert.That(problemDetails.Errors["ValidationErrors"], Contains.Item("Пароль слишком слабый)))))"));
+        }
+
+        [Test]
+        public async Task RecoveryAccess_ValidationFailed_ReturnsConflictLoginNotExist()
+        {
+            var apiRequest = CreateSampleRecoveryAccessUserApiRequest(login: "LightPlay");
+
+            var result = UserResult.FailureResult(ErrorCode.LoginNotExist);
+
+            _recoveryAccessUserUseCaseMock.Setup(u => u.RecoveryAccessAsync(It.IsAny<RecoveryAccessUserCommand>())).ReturnsAsync(result);
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.LoginNotExist)).Returns("Такого логина не существует.");
+
+            var actionResult = await _controller.RecoveryAccess(apiRequest);
+            var conflictRequestResult = (ConflictObjectResult)actionResult;
+            var errorResponseResult = (ErrorResponse)conflictRequestResult.Value!;
+
+            TestContext.Out.WriteLine(conflictRequestResult.StatusCode);
+            TestContext.Out.WriteLine(errorResponseResult.Message);
+
+            Assert.That(actionResult, Is.TypeOf<ConflictObjectResult>());
+            Assert.That(conflictRequestResult.StatusCode, Is.EqualTo(409));
+            Assert.That(errorResponseResult.Message, Is.EqualTo("Такого логина не существует."));
+            Assert.That(errorResponseResult.ErrorCode, Is.EqualTo("LoginNotExist"));
+        } 
+        
+        [Test]
+        public async Task RecoveryAccess_ValidationFailed_ReturnsConflictEmailNotExist()
+        {
+            var apiRequest = CreateSampleRecoveryAccessUserApiRequest(login: "LightPlay");
+
+            var result = UserResult.FailureResult(ErrorCode.EmailNotExist);
+
+            _recoveryAccessUserUseCaseMock.Setup(u => u.RecoveryAccessAsync(It.IsAny<RecoveryAccessUserCommand>())).ReturnsAsync(result);
+            _defaultErrorMessageProviderMock.Setup(p => p.GetMessage(ErrorCode.EmailNotExist)).Returns("Такой почты не существует.");
+
+            var actionResult = await _controller.RecoveryAccess(apiRequest);
+            var conflictRequestResult = (ConflictObjectResult)actionResult;
+            var errorResponseResult = (ErrorResponse)conflictRequestResult.Value!;
+
+            TestContext.Out.WriteLine(conflictRequestResult.StatusCode);
+            TestContext.Out.WriteLine(errorResponseResult.Message);
+
+            Assert.That(actionResult, Is.TypeOf<ConflictObjectResult>());
+            Assert.That(conflictRequestResult.StatusCode, Is.EqualTo(409));
+            Assert.That(errorResponseResult.Message, Is.EqualTo("Такой почты не существует."));
+            Assert.That(errorResponseResult.ErrorCode, Is.EqualTo("EmailNotExist"));
+        } 
+        
+        [Test]
+        public async Task RecoveryAccess_ValidationFailed_ReturnsObjectResultSaveUserError()
+        {
+            var apiRequest = CreateSampleRecoveryAccessUserApiRequest(login: "LightPlay");
+
+            var result = UserResult.FailureResult(ErrorCode.SaveUserError);
+
+            _recoveryAccessUserUseCaseMock.Setup(u => u.RecoveryAccessAsync(It.IsAny<RecoveryAccessUserCommand>())).ReturnsAsync(result);
+
+            var actionResult = await _controller.RecoveryAccess(apiRequest);
+            var objectResult = (ObjectResult)actionResult;
+            var errorResponseResult = (ErrorResponse)objectResult.Value!;
+
+            TestContext.Out.WriteLine(objectResult.StatusCode);
+            TestContext.Out.WriteLine(errorResponseResult.Message);
+
+            Assert.That(actionResult, Is.TypeOf<ObjectResult>());
+            Assert.That(objectResult.StatusCode, Is.EqualTo(500));
+            Assert.That(errorResponseResult.Message, Is.EqualTo("Во время восстановление пароля произошла непредвиденная ошибка. Пожалуйста, попробуйте позже."));
+            Assert.That(errorResponseResult.ErrorCode, Is.EqualTo("SaveUserError"));
+        }
+
+        [Test]
+        public async Task RecoveryAccess_UnknownError_ThrowsException()
+        {
+            var apiRequest = CreateSampleRecoveryAccessUserApiRequest();
+
+            _recoveryAccessUserUseCaseMock.Setup(u => u.RecoveryAccessAsync(It.IsAny<RecoveryAccessUserCommand>())).Throws(new Exception());
+
+            var actionResult = await _controller.RecoveryAccess(apiRequest);
+            var badObjectResult = (ObjectResult)actionResult;
+            var errorResponse = (ErrorResponse)badObjectResult.Value!;
+
+            TestContext.Out.WriteLine(badObjectResult.Value);
+
+            Assert.That(actionResult, Is.TypeOf<ObjectResult>());
+            Assert.That(errorResponse, Is.TypeOf<ErrorResponse>());
+            Assert.That(badObjectResult.StatusCode, Is.EqualTo(500));
+            Assert.That(errorResponse.ErrorCode, Is.EqualTo("UnknownError"));
+            Assert.That(errorResponse.Message, Is.EqualTo("Во время восстановление данных произошла непредвиденная ошибка. Пожалуйста, попробуйте позже либо обратитесь в поддержку"));
         }
     }
 }

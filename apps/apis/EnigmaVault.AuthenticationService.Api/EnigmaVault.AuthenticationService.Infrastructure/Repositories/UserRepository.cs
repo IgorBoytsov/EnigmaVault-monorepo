@@ -42,6 +42,33 @@ namespace EnigmaVault.AuthenticationService.Infrastructure.Repositories
             return domain;
         }
 
+        public async Task<bool> UpdatePasswordAsync(string login, string email, string newHash)
+        {
+            var updatedRows = await _context.Users
+                .Where(u => u.Login.ToLower() == login.ToLower() && u.Email.ToLower() == email.ToLower())
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(p => p.PasswordHash, newHash)
+                    .SetProperty(d => d.DateUpdate, DateTime.UtcNow));
+
+            if (updatedRows > 0)
+                return true;
+            else
+                return false;
+        }
+
+        public async Task<bool> UpdateDateEntryAsync(int id)
+        {
+            var updatedRows = await _context.Users
+                .Where(u => u.IdUser == id)
+                .ExecuteUpdateAsync(setters => setters
+                .SetProperty(d => d.DateEntry, DateTime.UtcNow));
+
+            if (updatedRows > 0)
+                return true;
+            else
+                return false;
+        }
+
         /*--Get-------------------------------------------------------------------------------------------*/
 
         public async Task<string> GetHashByLoginAsync(string login)
@@ -51,7 +78,7 @@ namespace EnigmaVault.AuthenticationService.Infrastructure.Repositories
             return user is null ? throw new ArgumentNullException("Пользователь не найден.") : user.PasswordHash;
         }
 
-        public async Task<UserDomain?> GetUserByLogin(string login)
+        public async Task<UserDomain?> GetUserByLoginAsync(string login)
         {
             var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Login.ToLower() == login.ToLower());
 
