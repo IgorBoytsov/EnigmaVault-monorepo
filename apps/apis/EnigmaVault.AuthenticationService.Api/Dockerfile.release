@@ -1,0 +1,26 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
+WORKDIR /app
+
+COPY EnigmaVault.AuthenticationService.Api/*.csproj ./EnigmaVault.AuthenticationService.Api/
+COPY EnigmaVault.AuthenticationService.Application/*.csproj ./EnigmaVault.AuthenticationService.Application/
+COPY EnigmaVault.AuthenticationService.Domain/*.csproj ./EnigmaVault.AuthenticationService.Domain/
+COPY EnigmaVault.AuthenticationService.Infrastructure/*.csproj ./EnigmaVault.AuthenticationService.Infrastructure/
+
+RUN dotnet restore "EnigmaVault.AuthenticationService.Api/EnigmaVault.AuthenticationService.Api.csproj"
+
+COPY . ./
+# Можно копировать каждую нужную папку отдельно:
+# COPY EnigmaVault.AuthenticationService.Api/ ./EnigmaVault.AuthenticationService.Api/
+# COPY EnigmaVault.AuthenticationService.Application/ ./EnigmaVault.AuthenticationService.Application/
+
+RUN dotnet publish "EnigmaVault.AuthenticationService.Api/EnigmaVault.AuthenticationService.Api.csproj" -c Release -o /app/publish --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+WORKDIR /app
+
+COPY --from=build-env /app/publish .
+
+ENV ASPNETCORE_HTTP_PORTS=8088
+EXPOSE 8088
+
+ENTRYPOINT ["dotnet", "EnigmaVault.AuthenticationService.Api.dll"]
