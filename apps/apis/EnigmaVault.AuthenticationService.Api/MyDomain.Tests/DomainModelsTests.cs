@@ -6,6 +6,8 @@ namespace MyDomain.Tests
 {
     internal class DomainModelsTests
     {
+        /*--UserDomain------------------------------------------------------------------------------------*/
+
         [Test]
         public void UserDomain_Create_WhenUserCreated()
         {
@@ -44,6 +46,76 @@ namespace MyDomain.Tests
             var (User, Message) = UserDomain.Create(loginResultVo, userName, passwordHash, emailAddressVo, phoneNumberVo, 1, 1, 1, 1);
 
             Assert.That(User, Is.Null);
+        }
+
+        /*--CountryDomain---------------------------------------------------------------------------------*/
+
+        [Test]
+        public void CountryDomain_Create_WhenCountryCreated()
+        {
+            string countryName = "Россия";
+
+            var (Country, Errors) = CountryDomain.Create(countryName);
+
+            if (Errors is not null)
+            {
+                foreach (var item in Errors)
+                    TestContext.Out.WriteLine(item);
+            }
+
+            Assert.That(Country, Is.Not.Null);
+            Assert.That(Errors, Is.Null);
+        }
+
+        [Test]
+        public void CountryDomain_Create_WhenCountryNotCreated_BecauseCountryNameIsEmpty()
+        {
+            string countryName = " ";
+
+            var (Country, Errors) = CountryDomain.Create(countryName);
+
+            if (Errors is not null)
+            {
+                foreach (var item in Errors)
+                    TestContext.Out.WriteLine(item);
+            }
+
+            Assert.That(Country, Is.Null);
+            Assert.That(Errors.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void CountryDomain_Create_WhenCountryNotCreated_BecauseCountryLengthLessThree()
+        {
+            string countryName = "Да";
+
+            var (Country, Errors) = CountryDomain.Create(countryName);
+
+            if (Errors is not null)
+            {
+                foreach (var item in Errors)
+                    TestContext.Out.WriteLine(item);
+            }
+
+            Assert.That(Country, Is.Null);
+            Assert.That(Errors.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void CountryDomain_Create_WhenCountryNotCreated_BecauseCountryLengthMoreOneHundred()
+        {
+            string countryName = "rgergethrtjryjtyiktrthzdhgdzffhfgjtyujkfhdhdhdfthryjtryjtjtyjtyjefergferrgergethrtjryjtyiktrthzdhgdzffhfgjtyujkfhdhdhdfthryjtryjtjtyjtyjefergfer";
+
+            var (Country, Errors) = CountryDomain.Create(countryName);
+
+            if (Errors is not null)
+            {
+                foreach (var item in Errors)
+                    TestContext.Out.WriteLine(item);
+            }
+
+            Assert.That(Country, Is.Null);
+            Assert.That(Errors.Count, Is.EqualTo(1));
         }
     }
 }

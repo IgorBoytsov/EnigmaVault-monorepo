@@ -37,7 +37,10 @@ namespace EnigmaVault.AuthenticationService.Api
             builder.Services.AddScoped<IRecoveryAccessUserUseCase, RecoveryAccessUserUseCase>();
             builder.Services.AddScoped<IGetUserByLoginUseCase, GetUserByLoginUseCase>();
 
+            builder.Services.AddScoped<IGetAllCountryStreamingUseCase, GetAllCountryStreamingUseCase>();
+
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 
             builder.Services.AddSingleton<IDefaultErrorMessageProvider, DefaultRegistrationErrorMessageProvider>();
             builder.Services.AddSingleton<IDefaultErrorMessageProvider, DefaultAuthenticateErrorMessageProvider>();
