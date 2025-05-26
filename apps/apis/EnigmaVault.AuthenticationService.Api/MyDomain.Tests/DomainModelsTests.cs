@@ -117,5 +117,21 @@ namespace MyDomain.Tests
             Assert.That(Country, Is.Null);
             Assert.That(Errors.Count, Is.EqualTo(1));
         }
+
+        /*--GenderDomain---------------------------------------------------------------------------------*/
+
+        [Test]
+        public void GenderDomain_Create_WhenCountryCreated()
+        {
+            int genderId = 1;
+            string genderName = "Россия";
+
+            var gender = GenderDomain.Reconstitute(genderId, genderName);
+
+            Assert.That(gender, Is.TypeOf<GenderDomain>());
+            Assert.That(gender, Is.Not.Null);
+            Assert.That(gender.IdGender, Is.EqualTo(genderId));
+            Assert.That(gender.GenderName, Is.EqualTo(genderName));
+        }
     }
 }

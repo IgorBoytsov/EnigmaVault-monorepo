@@ -1,4 +1,3 @@
-
 using EnigmaVault.AuthenticationService.Api.Exceptions;
 using EnigmaVault.AuthenticationService.Application.Abstractions.Hashers;
 using EnigmaVault.AuthenticationService.Application.Abstractions.Providers;
@@ -38,9 +37,11 @@ namespace EnigmaVault.AuthenticationService.Api
             builder.Services.AddScoped<IGetUserByLoginUseCase, GetUserByLoginUseCase>();
 
             builder.Services.AddScoped<IGetAllCountryStreamingUseCase, GetAllCountryStreamingUseCase>();
+            builder.Services.AddScoped<IGetAllGenderStreamingUseCase, GetAllGenderStreamingUseCase>();
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<ICountryRepository, CountryRepository>();
+            builder.Services.AddScoped<IGenderRepository, GenderRepository>();
 
             builder.Services.AddSingleton<IDefaultErrorMessageProvider, DefaultRegistrationErrorMessageProvider>();
             builder.Services.AddSingleton<IDefaultErrorMessageProvider, DefaultAuthenticateErrorMessageProvider>();
