@@ -1,0 +1,120 @@
+﻿<UserControl x:Class="EnigmaVault.WPF.Client.Views.UserControls.RegistrationControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:EnigmaVault.WPF.Client.Views.UserControls"
+             mc:Ignorable="d" 
+               Height="Auto" Width="Auto">
+
+    <StackPanel Width="310"
+                Orientation="Vertical">
+
+        <!--#region Текст -->
+
+        <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" d:Text="Регистрация"
+                   Style="{StaticResource TextBlock.NameProject.AuthenticationWindow}"/>
+
+        <TextBlock Text="{Binding ContentText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" d:Text="Для регестрации обязательно нужно указать логин, пароль и почту, либо номер телефона."
+                   Style="{StaticResource TextBlock.DescriptionProject.AuthenticationWindow}"/>
+
+        <!--#endregion-->
+
+        <!--#region Login -->
+
+        <TextBlock Text="Логин"
+                   Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+        <TextBox x:Name="txtLogin"
+                 Text="{Binding Login, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource TextBox.InputUserControl.AuthenticationWindow}">
+
+            <TextBox.Background>
+                <SolidColorBrush Color="Transparent"/>
+            </TextBox.Background>
+
+        </TextBox>
+
+        <!--#endregion-->
+
+        <!--#region Password -->
+
+        <TextBlock Text="Пароль"
+                   Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+        <TextBox x:Name="txtPass"
+                Text="{Binding Password, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                Style="{StaticResource TextBox.InputUserControl.AuthenticationWindow}">
+
+            <TextBox.Background>
+                <SolidColorBrush Color="Transparent"/>
+            </TextBox.Background>
+
+        </TextBox>
+
+        <!--#endregion-->
+
+        <!--#region Почта -->
+
+        <TextBlock Text="Почта"
+                   Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+        <TextBox x:Name="txtEmail"
+                 Text="{Binding Email, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource TextBox.InputUserControl.AuthenticationWindow}">
+
+            <TextBox.Background>
+                <SolidColorBrush Color="Transparent"/>
+            </TextBox.Background>
+
+        </TextBox>
+
+        <!--#endregion-->
+
+        <!--#region Гендер -->
+        
+        <StackPanel>
+            
+            <TextBlock Text="Гендер"
+                       Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+            <ComboBox ItemsSource="{Binding Genders, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                      SelectedItem="{Binding SelectedGender, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                      DisplayMemberPath="GenderName"/>
+        </StackPanel>
+        
+        <!--#endregion-->
+        
+        <!--#region Страна -->
+        
+        <StackPanel>
+
+            <TextBlock Text="Страна"
+                       Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+            <ComboBox ItemsSource="{Binding Countries, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                      SelectedItem="{Binding SelectedCountry, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                      DisplayMemberPath="CountryName"/>
+        </StackPanel>
+        
+        <!--#endregion-->
+
+        <!--#region Код подтверждение -->
+
+        <TextBlock Text="Код"
+                   Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+        <TextBox x:Name="txtCodeVerification"
+                 Text="{Binding CodeVerification, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource TextBox.InputUserControl.AuthenticationWindow}">
+
+            <TextBox.Background>
+                <SolidColorBrush Color="Transparent"/>
+            </TextBox.Background>
+
+        </TextBox>
+
+        <!--#endregion-->
+
+    </StackPanel>
+</UserControl>

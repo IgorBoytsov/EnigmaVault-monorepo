@@ -1,0 +1,93 @@
+﻿<UserControl x:Class="EnigmaVault.WPF.Client.Views.UserControls.RecoveryAccessControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:EnigmaVault.WPF.Client.Views.UserControls"
+             mc:Ignorable="d" 
+              Height="Auto" Width="Auto">
+
+    <StackPanel Width="310"
+                Orientation="Vertical">
+
+        <!--#region Текст -->
+
+        <TextBlock Text="Востановление доступа"
+                    FontSize="25"
+                    Style="{StaticResource TextBlock.NameProject.AuthenticationWindow}"/>
+
+        <TextBlock Text="Для востановление доступа введите почту или номер телефона, затем дождитель код доступа и введите его."
+                   Style="{StaticResource TextBlock.DescriptionProject.AuthenticationWindow}"/>
+
+        <!--#endregion-->
+
+        <!--#region Login -->
+
+        <TextBlock Text="Введите Логин"
+                   Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+        <TextBox x:Name="txtLogin"
+                 Text="{Binding Login, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource TextBox.InputUserControl.AuthenticationWindow}">
+
+            <TextBox.Background>
+                <SolidColorBrush Color="Transparent"/>
+            </TextBox.Background>
+
+        </TextBox>
+
+        <!--#endregion-->
+
+        <!--#region Email -->
+
+        <TextBlock Text="Введите Почту"
+                   Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+        <TextBox x:Name="txtEmail"
+                 Text="{Binding Email, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource TextBox.InputUserControl.AuthenticationWindow}">
+
+            <TextBox.Background>
+                <SolidColorBrush Color="Transparent"/>
+            </TextBox.Background>
+
+        </TextBox>
+
+        <!--#endregion-->
+
+        <!--#region Новый пароль -->
+
+        <TextBlock Text="Введите новый пароль"
+                   Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+        <TextBox x:Name="txtNewPass"
+                 Text="{Binding NewPassword, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource TextBox.InputUserControl.AuthenticationWindow}">
+
+            <TextBox.Background>
+                <SolidColorBrush Color="Transparent"/>
+            </TextBox.Background>
+
+        </TextBox>
+
+        <!--#endregion-->
+
+        <!--#region Код встановление -->
+
+        <TextBlock Text="Введите код"
+                   Style="{StaticResource TextBlock.LoginAndPassword.AuthenticationWindow}"/>
+
+        <TextBox x:Name="txtRecoveryCode"
+                 Text="{Binding RecoveryCode, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource TextBox.InputUserControl.AuthenticationWindow}">
+
+            <TextBox.Background>
+                <SolidColorBrush Color="Transparent"/>
+            </TextBox.Background>
+
+        </TextBox>
+
+        <!--#endregion-->
+
+    </StackPanel>
+</UserControl>

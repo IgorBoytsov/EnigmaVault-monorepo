@@ -1,0 +1,242 @@
+﻿<Window x:Class="EnigmaVault.WPF.Client.Views.Windows.AuthenticationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EnigmaVault.WPF.Client.Views.Windows"
+        xmlns:behaviors="clr-namespace:EnigmaVault.WPF.Client.Resources.Behaviors"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:converter="clr-namespace:EnigmaVault.WPF.Client.Resources.ValueConverters"
+        xmlns:amc="clr-namespace:EnigmaVault.WPF.Client.Views.UserControls" 
+        xmlns:enum="clr-namespace:EnigmaVault.WPF.Client.Enums" 
+        xmlns:windows="clr-namespace:EnigmaVault.WPF.Client.ViewModels.Windows" 
+        d:DataContext="{d:DesignInstance Type=windows:AuthenticationWindowVM}"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        AllowsTransparency="True"
+        Height="820" Width="1000"
+        d:Height="Auto"
+        Title="Авторизация">
+   
+    <Window.Resources>
+        <converter:AuthControlsVisibilityConverter x:Key="AuthControlsVisibilityConverter"/>
+    </Window.Resources>
+
+    <i:Interaction.Behaviors>
+        <behaviors:WindowDragBehavior/>
+    </i:Interaction.Behaviors>
+
+    <!--#region MainBorder -->
+
+    <Border CornerRadius="12">
+
+        <Border.Background>
+            <ImageBrush ImageSource="/Assets/Images/auth-background-key.png"
+                        Stretch="UniformToFill"/>
+        </Border.Background>
+
+        <Border CornerRadius="10"
+             BorderThickness="1"
+             Opacity="0.90">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition />
+                    <RowDefinition Height="120"/>
+                </Grid.RowDefinitions>
+
+                <!--#region Header -->
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="25"/>
+                        <ColumnDefinition Width="25"/>
+                        <ColumnDefinition Width="5"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!--#region Заголовок в углу -->
+
+                    <TextBlock Text="Авторизация"
+                            Grid.Column="0"/>
+
+                    <!--#endregion-->
+
+                    <!--#region Свернуть окно-->
+
+                    <Button x:Name="btnMinimize"
+                            Grid.Column="1"
+                            Command="{Binding MinimizeWindowCommand}" 
+                            CommandParameter="{x:Static enum:WindowName.AuthenticationWindow}"
+                            BorderThickness="0"
+                            Content="-"
+                            Foreground="White"
+                            FontSize="16"
+                            FontFamily="Montserrat"
+                            Cursor="Hand">
+
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#28AEED"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#278BEF"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Width="18"
+                                        Height="18"
+                                        CornerRadius="9"
+                                        Background="{TemplateBinding Background}">
+                                    <ContentPresenter VerticalAlignment="Center"
+                                                      HorizontalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+
+                    </Button>
+
+                    <!--#endregion-->
+
+                    <!--#region Закрыть приложение -->
+
+                    <Button x:Name="btnClouse"
+                            Grid.Column="2"
+                            Command="{Binding CloseWindowCommand}" 
+                            CommandParameter="{x:Static enum:WindowName.AuthenticationWindow}"
+                            BorderThickness="0"
+                            Content="X"
+                            Foreground="White"
+                            FontSize="16"
+                            FontFamily="Montserrat"
+                            Cursor="Hand">
+
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#DA34AE"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#C62DAE"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Width="18"
+                                        Height="18"
+                                        CornerRadius="9"
+                                        Background="{TemplateBinding Background}">
+                                    <ContentPresenter VerticalAlignment="Center"
+                                                      HorizontalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+
+                    </Button>
+
+                    <!--#endregion-->
+
+                </Grid>
+
+                <!--#endregion-->
+         
+                <!--#region AccountManagementControls -->
+
+                <!--Orientation="Vertical"-->
+                <DockPanel Grid.Row="1" 
+                            Width="400"
+                            HorizontalAlignment="Right"
+                            Margin="0,25,50,0">
+                    
+                    <amc:AuthenticationControl Visibility="{Binding CurrentAuthenticationType, Converter={StaticResource AuthControlsVisibilityConverter}, ConverterParameter={x:Static enum:AuthenticationType.Authentication}}" 
+                                               d:Visibility="Visible"
+                                               d:Margin="0,0,0,20"
+                                               DockPanel.Dock="Top"
+                                               Login="{Binding AuthenticationLogin}"
+                                               Password="{Binding AuthenticationPassword}"/>
+
+                    <amc:RegistrationControl Visibility="{Binding CurrentAuthenticationType, Converter={StaticResource AuthControlsVisibilityConverter}, ConverterParameter={x:Static enum:AuthenticationType.Registration}}" 
+                                             d:Visibility="Visible"
+                                             d:Margin="0,0,0,20"
+                                             DockPanel.Dock="Top"
+                                             Title="Регистрация" 
+                                             ContentText="Для регестрации обязательно нужно указать логин, пароль и почту, либо номер телефона."
+                                             Login="{Binding RegistrationLogin, Mode=TwoWay}"
+                                             Password="{Binding RegistrationPassword, Mode=TwoWay}"
+                                             Email="{Binding RegistrationEmail, Mode=TwoWay}"
+                                             Genders="{Binding Genders, Mode=TwoWay}"
+                                             SelectedGender="{Binding SelectedRegistrationGender}"
+                                             Countries="{Binding Countries, Mode=TwoWay}"
+                                             SelectedCountry="{Binding SelectedRegistrationCountry}"
+                                             CodeVerification="{Binding RegistrationCodeVerification, Mode=TwoWay}"/>
+
+                    <amc:RecoveryAccessControl Visibility="{Binding CurrentAuthenticationType, Converter={StaticResource AuthControlsVisibilityConverter}, ConverterParameter={x:Static enum:AuthenticationType.RecoveryAccess}}"
+                                               d:Visibility="Visible"
+                                               d:Margin="0,0,0,20"
+                                               DockPanel.Dock="Top"
+                                               Login="{Binding RecoveryLogin}"
+                                               Email="{Binding RecoveryEmail}"
+                                               RecoveryCode="{Binding RecoveryCodeVerification}"
+                                               NewPassword="{Binding RecoveryNewPassword}"/>
+
+                    <Button Content="Продолжить->"
+                            DockPanel.Dock="Bottom"
+                            Command="{Binding OpenMainWindowCommand}"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"/>
+                </DockPanel>
+
+                <!--#endregion-->
+
+                <!--#region Кнопки -->
+
+                <StackPanel Grid.Row="2" 
+                            HorizontalAlignment="Center" 
+                            VerticalAlignment="Center">
+                    <WrapPanel>
+
+                        <Button Content="Вход"
+                                Grid.Column="2"
+                                Command="{Binding SwitchOnAuthenticationControl}"
+                                CommandParameter="{x:Static enum:AuthenticationType.Authentication}"
+                                Width="150"
+                                Margin="0,0,10,0"/>
+
+                        <Button Content="Регистрация"
+                                Grid.Column="2"
+                                Command="{Binding SwitchOnRegistrationControl}"
+                                CommandParameter="{x:Static enum:AuthenticationType.Registration}"
+                                Width="150"
+                                Margin="0,0,0,0"/>
+
+                    </WrapPanel>
+
+                    <Button Content="Вспомнить пароль"
+                            Grid.Column="2"
+                            Command="{Binding SwitchOnRecoveryAccessControl}"
+                            CommandParameter="{x:Static enum:AuthenticationType.RecoveryAccess}"
+                            Margin="0,10,0,0"/>
+
+                </StackPanel>
+
+
+                <!--#endregion-->
+                
+            </Grid>
+
+        </Border>
+
+    </Border>
+
+    <!--#endregion-->
+
+</Window>

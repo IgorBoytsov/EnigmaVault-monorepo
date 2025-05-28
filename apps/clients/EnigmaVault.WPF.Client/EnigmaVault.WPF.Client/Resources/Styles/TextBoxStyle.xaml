@@ -1,0 +1,22 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!--#region AuthenticationWindow -->
+
+    <Style x:Key="TextBox.InputUserControl.AuthenticationWindow" TargetType="TextBox">
+        <!--<Setter Property="Height" Value="28"/>-->
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FontFamily" Value="Montserrat"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CaretBrush" Value="LightGray"/>
+        <Setter Property="BorderBrush" Value="DarkGray"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,5,0,0"/>
+        <!--<Setter Property="Padding" Value="30,0,0,0"/>-->
+    </Style>
+
+    <!--#endregion-->
+    
+</ResourceDictionary>
