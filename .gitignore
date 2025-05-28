@@ -8,6 +8,9 @@
 # Visual Studio Template Engine Host cache
 TemplateEngineHost/vs/
 
+# Игнорировать конфигурационный файл WPF клиента
+/clients/EnigmaVault.WPF.Client/apiconfig.json
+
 # Конец допольнительных правил
 
 # dotenv files
