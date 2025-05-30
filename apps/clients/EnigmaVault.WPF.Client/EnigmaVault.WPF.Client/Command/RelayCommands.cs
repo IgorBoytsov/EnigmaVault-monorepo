@@ -1,24 +1,26 @@
-﻿using System.Windows.Input;
-
-namespace EnigmaVault.WPF.Client.Command
+﻿namespace EnigmaVault.WPF.Client.Command
 {
-    public class RelayCommand<T> : ICommand
+    /// <summary>
+    /// Обобщенная реализация ICommand для синхронных операций.
+    /// </summary>
+    /// <typeparam name="T">Тип параметра команды.</typeparam>
+    public class RelayCommand<T> : CommandBase
     {
         private readonly Action<T> _execute;
         private readonly Predicate<T> _canExecute;
 
         /// <summary>
-        /// Конструктор для команды, которая всегда может быть выполнена.
+        /// Создает новую команду, которая всегда может быть выполнена.
         /// </summary>
-        /// <param name="execute">Метод, выполняющий логику команды. Не должен быть null.</param>
+        /// <param name="execute">Логика выполнения.</param>
         /// <exception cref="ArgumentNullException">Если execute равен null.</exception>
         public RelayCommand(Action<T> execute) : this(execute, null) { }
 
         /// <summary>
-        /// Основной конструктор.
+        /// Создает новую команду.
         /// </summary>
-        /// <param name="execute">Метод, выполняющий логику команды. Не должен быть null.</param>
-        /// <param name="canExecute">Метод, проверяющий, может ли команда быть выполнена. Может быть null.</param>
+        /// <param name="execute">Логика выполнения.</param>
+        /// <param name="canExecute">Логика проверки состояния выполнения.</param>
         /// <exception cref="ArgumentNullException">Если execute равен null.</exception>
         public RelayCommand(Action<T> execute, Predicate<T> canExecute)
         {
@@ -26,83 +28,35 @@ namespace EnigmaVault.WPF.Client.Command
             _canExecute = canExecute;
         }
 
-        public event EventHandler CanExecuteChanged;
-
-        public bool CanExecute(object parameter)
+        public override bool CanExecute(object parameter)
         {
-            if (_canExecute == null)
-            {
-                return true;
-            }
-
-            T typedParameter;
-            if (parameter == null)
-            {
-                if (typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) == null)
+            if (!TryConvertParameter<T>(parameter, out T typedParameter))
+                if (typeof(T) != typeof(object) && parameter != null && !(parameter is T))
                     return false;
 
-                typedParameter = default(T); 
-            }
-            else if (parameter is not T)
-            {
-                try
-                {
-                    typedParameter = (T)Convert.ChangeType(parameter, typeof(T));
-                }
-                catch (Exception) 
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                typedParameter = (T)parameter;
-            }
-
-            return _canExecute(typedParameter);
+            return _canExecute == null || _canExecute(typedParameter);
         }
 
-        public void Execute(object parameter)
+        public override void Execute(object parameter)
         {
-            T typedParameter;
-            if (parameter == null)
-            {
-                if (typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) == null)
-                {
-                    if (typeof(T) == typeof(object))
-                        typedParameter = (T)parameter;
-                    else
-                        typedParameter = (T)parameter; // Вызовет исключение.
-                }
-                else
-                    typedParameter = default(T); // null для ссылочных типов и Nullable<TValue>
-            }
-            else if (!(parameter is T))
-            {
-                try
-                {
-                    typedParameter = (T)Convert.ChangeType(parameter, typeof(T));
-                }
-                catch (Exception ex)
-                {
-                    throw new ArgumentException($"Параметр имеет тип {parameter.GetType().Name} но не удалось преобразовать в ожидаемый тип {typeof(T).Name}.", nameof(parameter), ex);
-                }
-            }
-            else
-            {
-                typedParameter = (T)parameter;
-            }
+            if (!TryConvertParameter<T>(parameter, out T typedParameter))
+                if (typeof(T) != typeof(object) && parameter != null && !(parameter is T))
+                    throw new ArgumentException($"Параметр имеет тип {parameter?.GetType().Name}, но ожидался совместимый с {typeof(T).Name}.", nameof(parameter));
 
-            _execute(typedParameter);
+            if (CanExecute(parameter))
+                _execute(typedParameter);
         }
-
-        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Необобщенная реализация ICommand для синхронных операций (использует object как параметр).
+    /// </summary>
     public class RelayCommand : RelayCommand<object>
     {
-        public RelayCommand(Action execute) : base(param => execute(), null) { }
+        public RelayCommand(Action execute) : base(param => execute(), null)
+            => ArgumentNullException.ThrowIfNull(execute);
 
-        public RelayCommand(Action execute, Func<bool> canExecute) : base(param => execute(), param => canExecute()) { }
+        public RelayCommand(Action execute, Func<bool> canExecute) : base(param => execute(), param => canExecute())
+            => ArgumentNullException.ThrowIfNull(execute);
     }
 }
