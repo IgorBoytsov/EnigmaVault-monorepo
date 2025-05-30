@@ -1,4 +1,5 @@
 ﻿using EnigmaVault.Application.Abstractions.Repositories;
+using EnigmaVault.Application.AutoMappers.Profiles;
 using EnigmaVault.Application.Services.Abstractions;
 using EnigmaVault.Application.Services.Implementations;
 using EnigmaVault.Application.UseCases.Abstractions.CountryCase;
@@ -50,6 +51,7 @@ namespace EnigmaVault.WPF.Client
                 throw new Exception("Ключ 'BaseAuthenticationServiceUrl' не найден или пуст в файле apiconfig.json!");
 
             ConfigureServices(services);
+            ConfigureAutoMapper(services);
             ConfigureWindow(services);
             ConfigurePage(services);
             ConfigureUseCases(services);
@@ -87,7 +89,7 @@ namespace EnigmaVault.WPF.Client
 
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
         }
-
+       
         private static void ConfigureUseCases(ServiceCollection services)
         {
             services.AddScoped<IAuthenticationUserUseCase, AuthenticationUserUseCase>();
@@ -107,5 +109,8 @@ namespace EnigmaVault.WPF.Client
             services.AddHttpClient<IGenderRepository, ApiGenderRepository>(authApi);
             services.AddHttpClient<ICountryRepository, ApiCountryRepository>(authApi);
         }
+
+        private static void ConfigureAutoMapper(ServiceCollection services) => services.AddAutoMapper(typeof(UserProfile).Assembly);
+
     }
 }
