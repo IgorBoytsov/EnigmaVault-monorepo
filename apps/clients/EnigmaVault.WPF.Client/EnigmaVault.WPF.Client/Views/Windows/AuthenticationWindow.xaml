@@ -17,7 +17,7 @@
         ResizeMode="NoResize"
         Background="Transparent"
         AllowsTransparency="True"
-        Height="820" Width="1000"
+        Height="720" Width="1000"
         d:Height="Auto"
         Title="Авторизация">
    
@@ -172,11 +172,12 @@
                                              ContentText="Для регестрации обязательно нужно указать логин, пароль и почту, либо номер телефона."
                                              Login="{Binding RegistrationLogin, Mode=TwoWay}"
                                              Password="{Binding RegistrationPassword, Mode=TwoWay}"
+                                             UserName="{Binding RegistrationUserName, Mode=TwoWay}"
                                              Email="{Binding RegistrationEmail, Mode=TwoWay}"
                                              Genders="{Binding Genders, Mode=TwoWay}"
-                                             SelectedGender="{Binding SelectedRegistrationGender}"
+                                             SelectedGender="{Binding SelectedRegistrationGender, Mode=TwoWay}"
                                              Countries="{Binding Countries, Mode=TwoWay}"
-                                             SelectedCountry="{Binding SelectedRegistrationCountry}"
+                                             SelectedCountry="{Binding SelectedRegistrationCountry, Mode=TwoWay}"
                                              CodeVerification="{Binding RegistrationCodeVerification, Mode=TwoWay}"/>
 
                     <amc:RecoveryAccessControl Visibility="{Binding CurrentAuthenticationType, Converter={StaticResource AuthControlsVisibilityConverter}, ConverterParameter={x:Static enum:AuthenticationType.RecoveryAccess}}"

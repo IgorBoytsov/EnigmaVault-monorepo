@@ -79,6 +79,23 @@ namespace EnigmaVault.WPF.Client.Views.UserControls
 
         #endregion
 
+        #region UserNameProperty
+
+        public static readonly DependencyProperty UserNameProperty =
+            DependencyProperty.Register(
+                nameof(UserName),
+                typeof(string),
+                typeof(RegistrationControl),
+                new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+
+        public string UserName
+        {
+            get => (string)GetValue(UserNameProperty);
+            set => SetValue(UserNameProperty, value);
+        }
+
+        #endregion
+
         #region EmailProperty
 
         public static readonly DependencyProperty EmailProperty =
