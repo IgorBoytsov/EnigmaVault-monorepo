@@ -7,6 +7,7 @@ using EnigmaVault.WPF.Client.Command;
 using EnigmaVault.WPF.Client.Enums;
 using EnigmaVault.WPF.Client.Services.Abstractions;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
 
 namespace EnigmaVault.WPF.Client.ViewModels.Windows
@@ -50,11 +51,13 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
             get => _currentAuthenticationType;
             set
             {
-                SetProperty(ref _currentAuthenticationType, value);
-
-                SwitchOnAuthenticationControl?.RaiseCanExecuteChanged();
-                SwitchOnRegistrationControl?.RaiseCanExecuteChanged();
-                SwitchOnRecoveryAccessControl?.RaiseCanExecuteChanged();
+                if (SetProperty(ref _currentAuthenticationType, value))
+                {
+                    SwitchOnAuthenticationControl?.RaiseCanExecuteChanged();
+                    SwitchOnRegistrationControl?.RaiseCanExecuteChanged();
+                    SwitchOnRecoveryAccessControl?.RaiseCanExecuteChanged();
+                    OpenMainWindowCommand?.RaiseCanExecuteChanged();
+                }
             }
         }
 
@@ -234,7 +237,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
             SwitchOnRegistrationControl = new RelayCommand<AuthenticationType>(Execute_SwitchOnRegistrationControl, CanExecute_SwitchOnRegistrationControl);
             SwitchOnRecoveryAccessControl = new RelayCommand<AuthenticationType>(Execute_SwitchOnRecoveryAccessControl, CanExecute_SwitchOnRecoveryAccessControl);
 
-            OpenMainWindowCommand = new RelayCommand(Execute_OpenMainWindow, CanExecute_OpenMainWindow);
+            OpenMainWindowCommand = new RelayCommandAsync(Execute_OpenMainWindowAsync, CanExecute_OpenMainWindow);
         }
 
         #region Отображение контрола с авторизацией
@@ -278,66 +281,87 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
 
         #region Выполнение аунтетификации/регастрацц/востановление доступа, с последующим открытием главного окна
 
-        public RelayCommand? OpenMainWindowCommand { get; private set; }
+        public RelayCommandAsync? OpenMainWindowCommand { get; private set; }
 
-        private void Execute_OpenMainWindow()
+        private async Task Execute_OpenMainWindowAsync()
         {
-            Action action = CurrentAuthenticationType switch
+            IsBusy = true;
+
+            Func<Task> asyncActionToExecute = CurrentAuthenticationType switch
             {
-                AuthenticationType.Authentication => async () =>
+                AuthenticationType.Authentication => async () => 
                 {
                     Result<UserDto?> result = await _authorizationService.AuthenticationAsync(AuthenticationLogin!, AuthenticationPassword!);
 
-                    if (result.IsSuccess)
+                    if (result.IsSuccess && result.Value != null)
                     {
                         _windowNavigationService.Open(WindowName.MainWindow);
-                        _windowNavigationService.TransmittingValue<object>(WindowName.MainWindow, null!);
+                        _windowNavigationService.TransmittingValue<UserDto>(WindowName.MainWindow, result.Value);
                         _windowNavigationService.Close(WindowName.AuthenticationWindow);
                     }
                     else
-                        MessageBox.Show($"Ошибки: {string.Join(';', result.Errors)}");
+                        MessageBox.Show($"Ошибки аутентификации: {string.Join("; ", result.Errors)}");
                 }
                 ,
                 AuthenticationType.Registration => async () =>
                 {
                     Result<(string Login, string Password)?> result = await _authorizationService.RegistrationAsync(RegistrationLogin, RegistrationPassword, RegistrationUserName, RegistrationEmail, RegistrationPhone, SelectedRegistrationGender!.IdGender, SelectedRegistrationCountry!.IdCountry);
-
-                    if (result.IsSuccess)
+                    
+                    if (result.IsSuccess && result.Value.HasValue)
                     {
-                        CurrentAuthenticationType = AuthenticationType.Authentication;
-
-                        AuthenticationLogin = result.Value!.Value.Login;
-                        AuthenticationPassword = result.Value!.Value.Password;
+                        AuthenticationLogin = result.Value.Value.Login;
+                        AuthenticationPassword = result.Value.Value.Password;
+                        CurrentAuthenticationType = AuthenticationType.Authentication; 
+                        MessageBox.Show("Регистрация прошла успешно! Теперь вы можете войти, используя указанные данные.");
                     }
                     else
-                        MessageBox.Show($"Ошибки: {string.Join(';', result.Errors)}");
+                        MessageBox.Show($"Ошибки регистрации: {string.Join("; ", result.Errors)}");
                 }
                 ,
                 AuthenticationType.RecoveryAccess => async () =>
                 {
                     Result<(string Login, string Password)?> result = await _authorizationService.RecoveryAccessAsync(RecoveryLogin, RecoveryEmail, RecoveryNewPassword);
 
-                    if (result.IsSuccess)
+                    if (result.IsSuccess && result.Value.HasValue)
                     {
-                        CurrentAuthenticationType = AuthenticationType.Authentication;
-
-                        AuthenticationLogin = result.Value!.Value.Login;
-                        AuthenticationPassword = result.Value!.Value.Password;
+                        AuthenticationLogin = result.Value.Value.Login;
+                        AuthenticationPassword = result.Value.Value.Password;
+                        CurrentAuthenticationType = AuthenticationType.Authentication; 
+                        MessageBox.Show("Доступ восстановлен! Используйте новые данные для входа.");
                     }
                     else
-                        MessageBox.Show($"Ошибки: {string.Join(';', result.Errors)}");
+                        MessageBox.Show($"Ошибки восстановления доступа: {string.Join("; ", result.Errors)}");
                 }
                 ,
-                _ => () => throw new Exception()
+                _ => () => 
+                {
+                    MessageBox.Show("Неизвестный тип операции. Действие не будет выполнено.");
+                    return Task.CompletedTask;
+                }
             };
-            action?.Invoke();
+
+            try
+            {
+                
+                if (asyncActionToExecute != null)
+                    await asyncActionToExecute();
+            }
+            catch (Exception ex) 
+            {
+                Debug.WriteLine($"Критическая ошибка при выполнении команды: {ex}");
+                MessageBox.Show($"Произошла непредвиденная ошибка: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         private bool CanExecute_OpenMainWindow()
         {
             return CurrentAuthenticationType switch
             {
-                AuthenticationType.Authentication => !string.IsNullOrWhiteSpace(AuthenticationLogin) && 
+                AuthenticationType.Authentication => !string.IsNullOrWhiteSpace(AuthenticationLogin) &&
                                                      !string.IsNullOrWhiteSpace(AuthenticationPassword),
 
                 AuthenticationType.Registration => !string.IsNullOrWhiteSpace(RegistrationLogin) &&
@@ -347,10 +371,10 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
                                                    SelectedRegistrationGender != null &&
                                                    SelectedRegistrationCountry != null,
 
-               AuthenticationType.RecoveryAccess => !string.IsNullOrWhiteSpace(RecoveryLogin) &&
-                                                    !string.IsNullOrWhiteSpace(RecoveryEmail) &&
-                                                    !string.IsNullOrWhiteSpace(RecoveryNewPassword),
-                _ => throw new Exception()
+                AuthenticationType.RecoveryAccess => !string.IsNullOrWhiteSpace(RecoveryLogin) &&
+                                                     !string.IsNullOrWhiteSpace(RecoveryEmail) &&
+                                                     !string.IsNullOrWhiteSpace(RecoveryNewPassword),
+                _ => false 
             };
         }
 

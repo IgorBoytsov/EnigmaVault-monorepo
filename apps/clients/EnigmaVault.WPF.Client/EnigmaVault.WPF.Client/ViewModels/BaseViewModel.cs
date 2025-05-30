@@ -20,6 +20,13 @@ namespace EnigmaVault.WPF.Client.ViewModels
             return true;
         }
 
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set => SetProperty<bool>(ref _isBusy, value);
+        }
+
         private UserDto? _currentUser;
         public UserDto? CurrentUser
         {
