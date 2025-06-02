@@ -6,6 +6,7 @@ using EnigmaVault.Domain.Results;
 using EnigmaVault.WPF.Client.Command;
 using EnigmaVault.WPF.Client.Enums;
 using EnigmaVault.WPF.Client.Services.Abstractions;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
@@ -20,16 +21,21 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
         private readonly IGetGendersUseCase _getGendersUseCase;
         private readonly IGetCountriesUseCase _getCountriesUseCase;
 
+        private readonly ILogger<AuthenticationWindowVM> _logger;
+
         public AuthenticationWindowVM(IWindowNavigationService windowNavigationService,
                                       IAuthorizationService authorizationService,
                                       IGetGendersUseCase getGendersUseCase,
-                                      IGetCountriesUseCase getCountriesUseCase) : base(windowNavigationService)
+                                      IGetCountriesUseCase getCountriesUseCase,
+                                      ILogger<AuthenticationWindowVM> logger) : base(windowNavigationService)
         {
             _windowNavigationService = windowNavigationService;
             _authorizationService = authorizationService;
 
             _getGendersUseCase = getGendersUseCase;
             _getCountriesUseCase = getCountriesUseCase;
+
+            _logger = logger;
 
             SetValueCommands();
             CurrentAuthenticationType = AuthenticationType.Authentication;
@@ -53,6 +59,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
             {
                 if (SetProperty(ref _currentAuthenticationType, value))
                 {
+                    _logger.LogInformation("Вызов обновление команд: SwitchOnAuthenticationControl, SwitchOnRegistrationControl, SwitchOnRecoveryAccessControl, OpenMainWindowCommand. Значение которое вызвало обновление {value}", value);
                     SwitchOnAuthenticationControl?.RaiseCanExecuteChanged();
                     SwitchOnRegistrationControl?.RaiseCanExecuteChanged();
                     SwitchOnRecoveryAccessControl?.RaiseCanExecuteChanged();
@@ -291,6 +298,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
             {
                 AuthenticationType.Authentication => async () => 
                 {
+                    _logger.LogInformation("Вызван запрос на аутентификацию пользователя");
                     Result<UserDto?> result = await _authorizationService.AuthenticationAsync(AuthenticationLogin!, AuthenticationPassword!);
 
                     if (result.IsSuccess && result.Value != null)
@@ -298,28 +306,40 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
                         _windowNavigationService.Open(WindowName.MainWindow);
                         _windowNavigationService.TransmittingValue<UserDto>(WindowName.MainWindow, result.Value);
                         _windowNavigationService.Close(WindowName.AuthenticationWindow);
+                        _logger.LogInformation("Запрос на аутентификацию пользователя выполнен успешно. {Value}", result.Value);
                     }
                     else
+                    {
+                        _logger.LogError("Произошла ошибка аутентификации. Errors {@Errors}", result.Errors);
                         MessageBox.Show($"Ошибки аутентификации: {string.Join("; ", result.Errors)}");
+                    }
+                       
                 }
                 ,
                 AuthenticationType.Registration => async () =>
                 {
+                    _logger.LogInformation("Вызван запрос на регистрацию пользователя");
                     Result<(string Login, string Password)?> result = await _authorizationService.RegistrationAsync(RegistrationLogin, RegistrationPassword, RegistrationUserName, RegistrationEmail, RegistrationPhone, SelectedRegistrationGender!.IdGender, SelectedRegistrationCountry!.IdCountry);
                     
                     if (result.IsSuccess && result.Value.HasValue)
                     {
                         AuthenticationLogin = result.Value.Value.Login;
                         AuthenticationPassword = result.Value.Value.Password;
-                        CurrentAuthenticationType = AuthenticationType.Authentication; 
+                        CurrentAuthenticationType = AuthenticationType.Authentication;
+                        _logger.LogInformation("Запрос на регистрацию пользователя выполнен успешно. {Value}", result.Value);
                         MessageBox.Show("Регистрация прошла успешно! Теперь вы можете войти, используя указанные данные.");
                     }
                     else
+                    {
+                        _logger.LogError("Произошла ошибка регистрации. Errors {@Errors}", result.Errors);
                         MessageBox.Show($"Ошибки регистрации: {string.Join("; ", result.Errors)}");
+                    }
+                       
                 }
                 ,
                 AuthenticationType.RecoveryAccess => async () =>
                 {
+                    _logger.LogInformation("Вызван запрос на восстановление данных от учетной записи пользователя");
                     Result<(string Login, string Password)?> result = await _authorizationService.RecoveryAccessAsync(RecoveryLogin, RecoveryEmail, RecoveryNewPassword);
 
                     if (result.IsSuccess && result.Value.HasValue)
@@ -327,14 +347,19 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
                         AuthenticationLogin = result.Value.Value.Login;
                         AuthenticationPassword = result.Value.Value.Password;
                         CurrentAuthenticationType = AuthenticationType.Authentication; 
+                        _logger.LogInformation("Запрос на восстановление данных от учетной записи выполнен успешно. {Value}", result.Value);
                         MessageBox.Show("Доступ восстановлен! Используйте новые данные для входа.");
                     }
                     else
+                    {
+                        _logger.LogError("Произошла ошибка восстановление данных. Errors {@Errors}", result.Errors);
                         MessageBox.Show($"Ошибки восстановления доступа: {string.Join("; ", result.Errors)}");
+                    }         
                 }
                 ,
                 _ => () => 
                 {
+                    _logger.LogError("Было передано перечисление, которое не обрабатывается в коде");
                     MessageBox.Show("Неизвестный тип операции. Действие не будет выполнено.");
                     return Task.CompletedTask;
                 }
@@ -348,7 +373,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Windows
             }
             catch (Exception ex) 
             {
-                Debug.WriteLine($"Критическая ошибка при выполнении команды: {ex}");
+                _logger.LogCritical(ex, "Критическая ошибка при выполнении команды}");
                 MessageBox.Show($"Произошла непредвиденная ошибка: {ex.Message}");
             }
             finally

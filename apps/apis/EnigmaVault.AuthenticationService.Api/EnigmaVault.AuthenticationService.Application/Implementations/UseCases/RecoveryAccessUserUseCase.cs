@@ -4,9 +4,9 @@ using EnigmaVault.AuthenticationService.Application.Abstractions.UseCases;
 using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
 using EnigmaVault.AuthenticationService.Application.DTOs.Results;
 using EnigmaVault.AuthenticationService.Application.Enums;
-using EnigmaVault.AuthenticationService.Domain.DomainModels;
 using EnigmaVault.AuthenticationService.Domain.DomainModels.Validations;
 using EnigmaVault.AuthenticationService.Domain.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
 {
@@ -14,18 +14,26 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly ILogger<RecoveryAccessUserUseCase> _logger;
 
         public RecoveryAccessUserUseCase(IUserRepository userRepository,
-                                         IPasswordHasher passwordHasher)
+                                         IPasswordHasher passwordHasher,
+                                         ILogger<RecoveryAccessUserUseCase> logger)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
+            _logger = logger;
         }
 
         public async Task<UserResult> RecoveryAccessAsync(RecoveryAccessUserCommand command)
-        {
+        {   
             if (command is null)
+            {
+                _logger.LogError("Команда пришла без значений. {@command}", command);
                 throw new ArgumentNullException(nameof(command));
+            }
+                
+            _logger.LogInformation("<<======Начало выполнения RecoveryAccessAsync для Login: {Login} ======>>", command.Login);
 
             var validationErrors = new List<string>();
 
@@ -69,9 +77,16 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
             var updateResult = await _userRepository.UpdatePasswordAsync(command.Login, command.Email, newHash);
 
             if (updateResult)
+            {
+                _logger.LogInformation("<<======Выполнения RecoveryAccessAsync прошло успешно для Login: {Login} ======>>", command.Login);
                 return UserResult.SuccessResult();
+            }
             else
+            {
+                _logger.LogError("Не удалось выполнить изменение пароля для пользователя {Login}.", command.Login);
                 return UserResult.FailureResult(ErrorCode.SaveUserError, "Не удалось сохранить пароль.");
+            }
+                
         }
     }
 }

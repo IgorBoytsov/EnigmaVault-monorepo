@@ -1,15 +1,19 @@
 ﻿using EnigmaVault.AuthenticationService.Application.Implementations.Hashers;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace MyApplication.Tests
 {
     internal class PasswordHasherTests
     {
         private Argon2PasswordHasher _hasher;
+        private Mock<ILogger<Argon2PasswordHasher>> _loggerArgonMock;
 
         [SetUp]
         public void SetUp()
         {
-            _hasher = new Argon2PasswordHasher();
+            _loggerArgonMock = new Mock<ILogger<Argon2PasswordHasher>>();
+            _hasher = new Argon2PasswordHasher(_loggerArgonMock.Object);
         }
 
         private static bool IsValidBase64(string input)

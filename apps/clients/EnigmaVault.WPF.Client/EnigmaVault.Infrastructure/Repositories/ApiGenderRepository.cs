@@ -3,7 +3,7 @@ using EnigmaVault.Domain.DomainModels;
 using EnigmaVault.Domain.Enums;
 using EnigmaVault.Domain.Results;
 using EnigmaVault.Infrastructure.Models.Response;
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -13,11 +13,13 @@ namespace EnigmaVault.Infrastructure.Repositories
     {
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonSerializerOptions;
+        private readonly ILogger<ApiGenderRepository> _logger;
 
-        public ApiGenderRepository(HttpClient httpClient)
+        public ApiGenderRepository(HttpClient httpClient,
+                                   ILogger<ApiGenderRepository> logger)
         {
             _httpClient = httpClient;
-
+            _logger = logger;
             _jsonSerializerOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -34,40 +36,42 @@ namespace EnigmaVault.Infrastructure.Repositories
 
                 if (response.IsSuccessStatusCode)
                 {
+                    _logger.LogInformation("Попытка получение списка гендеров с EndPoint {getGendersEndpoint}", getGendersEndpoint);
+
                     List<GenderResponse>? gendersResponse = await response.Content.ReadFromJsonAsync<List<GenderResponse>>(_jsonSerializerOptions);
 
                     if (gendersResponse != null)
                     {
                         List<GenderDomain>? genders = gendersResponse.Select(g => GenderDomain.Reconstitute(g.IdGender, g.GenderName)).ToList();
-
+                        _logger.LogInformation("Запрос успешно получен {@genders}", genders);
                         return Result<List<GenderDomain>?>.Success(genders);
                     }
                     else
                     {
-                        //TODO: Добавить логер
-                        return Result<List<GenderDomain>?>.Failure(new Error(ErrorCode.EmptyValue, "API вернуло успешный статус, но данные списка не были получены (возможно, null)."));
+                        _logger.LogError("API запрос выполнился, но данных не вернул {@response}", response);
+                        return Result<List<GenderDomain>?>.Failure(new Error(ErrorCode.EmptyValue, "Запрос выполнился успешно, но данные списка не были получены."));
                     }
                 }
                 else
                 {
                     string errorContent = await response.Content.ReadAsStringAsync();
-                    return Result<List<GenderDomain>?>.Failure(new Error(ErrorCode.AuthApiError, $"Ошибка API: {response.StatusCode}. {errorContent}"));
+                    _logger.LogError("API не выполнил запрос {errorContent}", errorContent);
+                    return Result<List<GenderDomain>?>.Failure(new Error(ErrorCode.ApiError, $"Ошибка API: {response.StatusCode}. {errorContent}"));
                 }
             }
             catch (HttpRequestException ex)
             {
+                _logger.LogCritical(ex, "Сетевая ошибка при аутентификации");
                 return Result<List<GenderDomain>?>.Failure(new Error(ErrorCode.NetworkError, $"Сетевая ошибка: {ex.Message}"));
             }
             catch (JsonException ex)
             {
-                //TODO: Добавить логер
-                Debug.WriteLine($"JSON ошибка при получение списка гендоров: {ex.Message}. Path: {ex.Path}, LineNumber: {ex.LineNumber}, BytePositionInLine: {ex.BytePositionInLine}");
+                _logger.LogCritical(ex, "JSON ошибка при аутентификации");
                 return Result<List<GenderDomain>?>.Failure(new Error(ErrorCode.InvalidResponseFormat, $"Ошибка формата ответа от API: {ex.Message}"));
             }
             catch (Exception ex)
             {
-                //TODO: Добавить логер
-                Debug.WriteLine($"Непредвиденная ошибка при получение списка гендоров: {ex}");
+                _logger.LogCritical(ex, "Непредвиденная ошибка при получение списка гендеров");
                 return Result<List<GenderDomain>?>.Failure(new Error(ErrorCode.Unknown, $"Произошла непредвиденная ошибка: {ex.Message}"));
             }
         }

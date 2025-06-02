@@ -9,6 +9,7 @@ using EnigmaVault.AuthenticationService.Application.DTOs.Results;
 using EnigmaVault.AuthenticationService.Application.Enums;
 using EnigmaVault.AuthenticationService.Application.Implementations.Providers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace MyApi.Tests
@@ -20,6 +21,7 @@ namespace MyApi.Tests
         private Mock<IAuthenticateUserUseCase> _authenticateUserUseCaseMock;
         private Mock<IRecoveryAccessUserUseCase> _recoveryAccessUserUseCaseMock;
         private Mock<IDefaultErrorMessageProvider> _defaultErrorMessageProviderMock;
+        private Mock<ILogger<UsersController>> _loggerMock;
         private UsersController _controller;
 
         [SetUp]
@@ -29,8 +31,9 @@ namespace MyApi.Tests
             _authenticateUserUseCaseMock = new Mock<IAuthenticateUserUseCase>();
             _recoveryAccessUserUseCaseMock = new Mock<IRecoveryAccessUserUseCase>();
             _defaultErrorMessageProviderMock = new Mock<IDefaultErrorMessageProvider>();
+            _loggerMock = new Mock<ILogger<UsersController>>();
 
-            _controller = new UsersController(_registerUseCaseMock.Object, _authenticateUserUseCaseMock.Object, _recoveryAccessUserUseCaseMock.Object, new List<IDefaultErrorMessageProvider>() {new DefaultRegistrationErrorMessageProvider(), new DefaultAuthenticateErrorMessageProvider()});
+            _controller = new UsersController(_registerUseCaseMock.Object, _authenticateUserUseCaseMock.Object, _recoveryAccessUserUseCaseMock.Object, new List<IDefaultErrorMessageProvider>() {new DefaultRegistrationErrorMessageProvider(), new DefaultAuthenticateErrorMessageProvider()}, _loggerMock.Object);
         }
 
         private static RegisterUserApiRequest CreateSampleRegisterUserApiRequest(string? login = "LightPlay", string? userName = "Игорь", string password = "ValidPass123.!", string? email = "ValidEmail@yandex.ru", string? phone = "+7004001010")

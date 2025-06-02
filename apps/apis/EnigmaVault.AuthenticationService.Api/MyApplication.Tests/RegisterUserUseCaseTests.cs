@@ -1,10 +1,12 @@
-﻿using EnigmaVault.AuthenticationService.Application.Abstractions.Hashers;
+﻿using Castle.Core.Logging;
+using EnigmaVault.AuthenticationService.Application.Abstractions.Hashers;
 using EnigmaVault.AuthenticationService.Application.Abstractions.Repositories;
 using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
 using EnigmaVault.AuthenticationService.Application.Enums;
 using EnigmaVault.AuthenticationService.Application.Implementations.UseCases;
 using EnigmaVault.AuthenticationService.Domain.DomainModels;
 using EnigmaVault.AuthenticationService.Domain.ValueObjects;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace MyApplication.Tests
@@ -14,6 +16,7 @@ namespace MyApplication.Tests
     {
         private Mock<IUserRepository> _userRepositoryMock;
         private Mock<IPasswordHasher> _passwordHasherMock;
+        private Mock<ILogger<RegisterUserUseCase>> _loggerMock;
         private RegisterUserUseCase _useCase;
 
         [SetUp]
@@ -21,7 +24,8 @@ namespace MyApplication.Tests
         {
             _userRepositoryMock = new Mock<IUserRepository>();
             _passwordHasherMock = new Mock<IPasswordHasher>();
-            _useCase = new RegisterUserUseCase(_userRepositoryMock.Object, _passwordHasherMock.Object);
+            _loggerMock = new Mock<ILogger<RegisterUserUseCase>>();
+            _useCase = new RegisterUserUseCase(_userRepositoryMock.Object, _passwordHasherMock.Object, _loggerMock.Object);
         }
 
         private static RegisterUserCommand CreateSampleRegisterUserCommand(string? login = "LightPlay", string? userName = "Игорь", string password = "ValidPass123.!", string? email = "ValidEmail@yandex.ru", string? phone = "+7004001010")

@@ -5,6 +5,8 @@ using EnigmaVault.AuthenticationService.Domain.ValueObjects;
 using EnigmaVault.AuthenticationService.Infrastructure.Data;
 using EnigmaVault.AuthenticationService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework.Internal;
 
 namespace MyInfrastructure.Tests
@@ -13,15 +15,19 @@ namespace MyInfrastructure.Tests
     {
         private readonly UsersDBContext _context;
         private readonly IUserRepository _userRepository;
+        private Mock<ILogger<UserRepository>> _loggerUserRepositoryMock;
+        private Mock<ILogger<Argon2PasswordHasher>> _loggerArgonMock;
 
         public UserRepositoryTests()
         {
             var options = new DbContextOptionsBuilder<UsersDBContext>().UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()).Options;
 
+            _loggerUserRepositoryMock = new Mock<ILogger<UserRepository>>();
+            _loggerArgonMock = new Mock<ILogger<Argon2PasswordHasher>>();
             _context = new UsersDBContext(options);
             _context.Database.EnsureCreated();
 
-            _userRepository = new UserRepository(_context);
+            _userRepository = new UserRepository(_context, _loggerUserRepositoryMock.Object);
         }
 
         public void Dispose()
@@ -33,7 +39,7 @@ namespace MyInfrastructure.Tests
         private UserDomain CreateSampleUserDomain(string? login = "testLogin", string? userName = "LightPlay", string? email = "test@example.com", string? phone = "01234567891", string? password = "4444")
         {
             var errors = new List<string>();
-            var passwordHasher = new Argon2PasswordHasher();
+            var passwordHasher = new Argon2PasswordHasher(_loggerArgonMock.Object);
 
             var loginResult = Login.TryCreate(login, out var loginResultVo);
             var emailAddressResult = EmailAddress.TryCreate(email, out var emailAddressVo);

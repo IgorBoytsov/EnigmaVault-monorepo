@@ -1,22 +1,33 @@
 ﻿using EnigmaVault.AuthenticationService.Application.Implementations.Hashers;
 using EnigmaVault.AuthenticationService.Domain.DomainModels;
 using EnigmaVault.AuthenticationService.Domain.ValueObjects;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace MyDomain.Tests
 {
     internal class DomainModelsTests
     {
+        private Mock<ILogger<Argon2PasswordHasher>> _loggerArgonMock;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _loggerArgonMock = new Mock<ILogger<Argon2PasswordHasher>>();
+        }
+
         /*--UserDomain------------------------------------------------------------------------------------*/
 
         [Test]
         public void UserDomain_Create_WhenUserCreated()
         {
+
             string? login = "LightPlay";
             string? userName = "Igor";
             string? email = "test@example.com";
             string? phone = "+7 915 100 10 10";
             string? password = "VeryHardPassword";
-            var passwordHasher = new Argon2PasswordHasher();
+            var passwordHasher = new Argon2PasswordHasher(_loggerArgonMock.Object);
 
             Login.TryCreate(login, out var loginResultVo);
             EmailAddress.TryCreate(email, out var emailAddressVo);
@@ -36,7 +47,7 @@ namespace MyDomain.Tests
             string? email = "test№example.com"; //Не правильный адрес почты
             string? phone = "8 915 сто 1- 10"; //Не правильный номер
             string? password = "VeryHardPassword";
-            var passwordHasher = new Argon2PasswordHasher();
+            var passwordHasher = new Argon2PasswordHasher(_loggerArgonMock.Object);
 
             Login.TryCreate(login, out Login? loginResultVo);
             EmailAddress.TryCreate(email, out EmailAddress? emailAddressVo);

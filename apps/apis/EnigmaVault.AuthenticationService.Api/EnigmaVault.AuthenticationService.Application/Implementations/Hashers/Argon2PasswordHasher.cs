@@ -1,13 +1,15 @@
 ﻿using EnigmaVault.AuthenticationService.Application.Abstractions.Hashers;
 using Konscious.Security.Cryptography;
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace EnigmaVault.AuthenticationService.Application.Implementations.Hashers
 {
-    public class Argon2PasswordHasher : IPasswordHasher
+    public class Argon2PasswordHasher(ILogger<Argon2PasswordHasher> logger) : IPasswordHasher
     {
+        private readonly ILogger<Argon2PasswordHasher> _logger = logger;
+
         private const int ArgonDegreeOfParallelism = 2;  // Количество потоков (например, количество ядер CPU)
         private const int ArgonIterations = 3;           // Количество проходов по памяти
         private const int ArgonMemorySizeKb = 65536;     // Объем памяти в КБ (64 МБ). OWASP рекомендует 19MiB (19456 KB) для Argon2id.
@@ -18,7 +20,11 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.Hashers
         public string HashPassword(string password)
         {
             if (string.IsNullOrEmpty(password))
+            {
+                _logger.LogError("Поле password {password} пришло пустое", password);
                 throw new ArgumentNullException(nameof(password));
+            }
+                
 
             byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
 
@@ -37,20 +43,28 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.Hashers
             string saltBase64 = Convert.ToBase64String(salt);
             string hashBase64 = Convert.ToBase64String(hash);
 
+            _logger.LogDebug("Хеш для пароля был успешно создан.");
             return $"Argon2id:{ArgonDegreeOfParallelism}:{ArgonIterations}:{ArgonMemorySizeKb}:{saltBase64}:{hashBase64}";
         }
 
         public bool VerifyPassword(string password, string storedHashString)
         {
             if (string.IsNullOrEmpty(password))
+            {
+                _logger.LogError("Поле password {password} пришло пустое", password);
                 throw new ArgumentNullException(nameof(password));
+            }
+                
             if (string.IsNullOrEmpty(storedHashString))
+            {
+                _logger.LogError("Поле storedHashString {storedHashString} пришло пустое", storedHashString);
                 throw new ArgumentNullException(nameof(storedHashString));
-
+            }
+               
             string[] parts = storedHashString.Split(':');
             if (parts.Length != 6 || parts[0] != "Argon2id")
             {
-                Debug.WriteLine("Не верный формат данных для алгоритма Argon2id.");
+                _logger.LogDebug("Не верный формат данных для алгоритма Argon2id. Было получено: {storedHashString}.", storedHashString);
                 return false;
             }
 
@@ -66,7 +80,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.Hashers
                     !int.TryParse(parts[2], out iterations) ||
                     !int.TryParse(parts[3], out memorySizeKb))
                 {
-                    Debug.WriteLine("Не верные параметры для Argon2.");
+                    _logger.LogDebug("Не верные параметры для Argon2. Параметры: {@parts}", parts);
                     return false;
                 }
 
@@ -75,7 +89,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.Hashers
             }
             catch (FormatException ex)
             {
-                Debug.WriteLine($"Ошибка парсинга компонентов хеша: {ex.Message}");
+                _logger.LogDebug(ex, "Ошибка парсинга компонентов хеша");
                 return false;
             }
 
@@ -91,6 +105,7 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.Hashers
 
             byte[] testHash = argon2.GetBytes(storedHash.Length);
 
+            _logger.LogDebug("Верификация хеша была успешно пройдена");
             return CryptographicOperations.FixedTimeEquals(testHash, storedHash);
         }
     }

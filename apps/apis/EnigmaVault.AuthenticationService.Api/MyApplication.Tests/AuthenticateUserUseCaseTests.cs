@@ -6,6 +6,7 @@ using EnigmaVault.AuthenticationService.Application.Implementations.Hashers;
 using EnigmaVault.AuthenticationService.Application.Implementations.UseCases;
 using EnigmaVault.AuthenticationService.Domain.DomainModels;
 using EnigmaVault.AuthenticationService.Domain.ValueObjects;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace MyApplication.Tests
@@ -14,6 +15,8 @@ namespace MyApplication.Tests
     {
         private Mock<IUserRepository> _userRepositoryMock;
         private Mock<IPasswordHasher> _passwordHasherMock;
+        private Mock<ILogger<AuthenticateUserUseCase>> _loggerAuthenticateUserUseCaseMock;
+        private Mock<ILogger<Argon2PasswordHasher>> _loggerArgonMock;
         private AuthenticateUserUseCase _useCase;
 
         [SetUp]
@@ -21,7 +24,9 @@ namespace MyApplication.Tests
         {
             _userRepositoryMock = new Mock<IUserRepository>();
             _passwordHasherMock = new Mock<IPasswordHasher>();
-            _useCase = new AuthenticateUserUseCase(_userRepositoryMock.Object, _passwordHasherMock.Object);
+            _loggerAuthenticateUserUseCaseMock = new Mock<ILogger<AuthenticateUserUseCase>>();
+            _loggerArgonMock = new Mock<ILogger<Argon2PasswordHasher>>();
+            _useCase = new AuthenticateUserUseCase(_userRepositoryMock.Object, _passwordHasherMock.Object, _loggerAuthenticateUserUseCaseMock.Object);
         }
 
         private static AuthenticateUserCommand CreateSampleAuthenticateUserCommand(string? login = "LightPlay", string password = "ValidPass123.!")
@@ -36,7 +41,7 @@ namespace MyApplication.Tests
         private UserDomain CreateSampleUserDomain(string? login = "testLogin", string? userName = "LightPlay", string? email = "test@example.com", string? phone = "01234567891", string? password = "4444")
         {
             var errors = new List<string>();
-            var passwordHasher = new Argon2PasswordHasher();
+            var passwordHasher = new Argon2PasswordHasher(_loggerArgonMock.Object);
 
             var loginResult = Login.TryCreate(login, out var loginResultVo);
             var emailAddressResult = EmailAddress.TryCreate(email, out var emailAddressVo);

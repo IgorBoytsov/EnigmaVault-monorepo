@@ -9,6 +9,7 @@ using EnigmaVault.AuthenticationService.Application.Implementations.UseCases;
 using EnigmaVault.AuthenticationService.Infrastructure.Data;
 using EnigmaVault.AuthenticationService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace EnigmaVault.AuthenticationService.Api
 {
@@ -16,49 +17,85 @@ namespace EnigmaVault.AuthenticationService.Api
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console() 
+                .CreateBootstrapLogger();
 
-            builder.Services.AddControllers();
-            builder.Services.AddOpenApi();
+            try
+            {
+                var builder = WebApplication.CreateBuilder(args);
 
-            #region Дополнительные зависимости
+                builder.Services.AddControllers();
+                builder.Services.AddOpenApi();
 
-             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-            if (string.IsNullOrEmpty(connectionString))
-                throw new InvalidConnectionStringException("Строка подключения 'DefaultConnection' не найдена.");
+                if (string.IsNullOrEmpty(connectionString))
+                    throw new InvalidConnectionStringException("Строка подключения 'DefaultConnection' не найдена.");
 
-            builder.Services.AddDbContext<UsersDBContext>(options =>
-                options.UseSqlServer(connectionString));
+                AddDbContext(builder.Services, connectionString);
+                AddLogger(builder);
+                AddRepositories(builder.Services);
+                AddUseCases(builder.Services);
+                AddProviders(builder.Services);
 
-            builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
-            builder.Services.AddScoped<IAuthenticateUserUseCase, AuthenticateUserUseCase>();
-            builder.Services.AddScoped<IRecoveryAccessUserUseCase, RecoveryAccessUserUseCase>();
-            builder.Services.AddScoped<IGetUserByLoginUseCase, GetUserByLoginUseCase>();
+                builder.Services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
 
-            builder.Services.AddScoped<IGetAllCountryStreamingUseCase, GetAllCountryStreamingUseCase>();
-            builder.Services.AddScoped<IGetAllGenderStreamingUseCase, GetAllGenderStreamingUseCase>();
+                var app = builder.Build();
 
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<ICountryRepository, CountryRepository>();
-            builder.Services.AddScoped<IGenderRepository, GenderRepository>();
+                if (app.Environment.IsDevelopment())
+                    app.MapOpenApi();
 
-            builder.Services.AddSingleton<IDefaultErrorMessageProvider, DefaultRegistrationErrorMessageProvider>();
-            builder.Services.AddSingleton<IDefaultErrorMessageProvider, DefaultAuthenticateErrorMessageProvider>();
+                app.UseSerilogRequestLogging();
 
-            builder.Services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
+                app.UseHttpsRedirection();
+                app.UseAuthorization();
+                app.MapControllers();
+                app.Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Приложение не запустилось");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+        }
 
-            #endregion
+        private static void AddDbContext(IServiceCollection services, string connectionString) => services.AddDbContext<UsersDBContext>(options => options.UseSqlServer(connectionString));
 
-            var app = builder.Build();
+        private static void AddUseCases(IServiceCollection services)
+        {
+            services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
+            services.AddScoped<IAuthenticateUserUseCase, AuthenticateUserUseCase>();
+            services.AddScoped<IRecoveryAccessUserUseCase, RecoveryAccessUserUseCase>();
+            services.AddScoped<IGetUserByLoginUseCase, GetUserByLoginUseCase>();
 
-            if (app.Environment.IsDevelopment())
-                app.MapOpenApi();
+            services.AddScoped<IGetAllCountryStreamingUseCase, GetAllCountryStreamingUseCase>();
+            services.AddScoped<IGetAllGenderStreamingUseCase, GetAllGenderStreamingUseCase>();
+        } 
+        
+        private static void AddRepositories(IServiceCollection services)
+        {
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ICountryRepository, CountryRepository>();
+            services.AddScoped<IGenderRepository, GenderRepository>();
+        } 
+        
+        private static void AddProviders(IServiceCollection services)
+        {
+            services.AddSingleton<IDefaultErrorMessageProvider, DefaultRegistrationErrorMessageProvider>();
+            services.AddSingleton<IDefaultErrorMessageProvider, DefaultAuthenticateErrorMessageProvider>();
+        }
 
-            app.UseHttpsRedirection();
-            app.UseAuthorization();
-            app.MapControllers();
-            app.Run();
+        private static void AddLogger(WebApplicationBuilder builder)
+        {
+            builder.Host.UseSerilog((hostingContext, loggerConfig) =>
+            {
+                loggerConfig.ReadFrom.Configuration(hostingContext.Configuration)
+                .Enrich.FromLogContext();
+            });
         }
     }
 }

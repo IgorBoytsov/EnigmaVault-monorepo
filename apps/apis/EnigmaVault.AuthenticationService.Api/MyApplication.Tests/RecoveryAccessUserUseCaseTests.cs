@@ -3,6 +3,7 @@ using EnigmaVault.AuthenticationService.Application.Abstractions.Repositories;
 using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
 using EnigmaVault.AuthenticationService.Application.Enums;
 using EnigmaVault.AuthenticationService.Application.Implementations.UseCases;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace MyApplication.Tests
@@ -11,6 +12,7 @@ namespace MyApplication.Tests
     {
         private Mock<IUserRepository> _userRepositoryMock;
         private Mock<IPasswordHasher> _passwordHasherMock;
+        private Mock<ILogger<RecoveryAccessUserUseCase>> _loggerAuthenticateUserUseCaseMock;
         private RecoveryAccessUserUseCase _useCase;
 
         [SetUp]
@@ -18,7 +20,8 @@ namespace MyApplication.Tests
         {
             _userRepositoryMock = new Mock<IUserRepository>();
             _passwordHasherMock = new Mock<IPasswordHasher>();
-            _useCase = new RecoveryAccessUserUseCase(_userRepositoryMock.Object, _passwordHasherMock.Object);
+            _loggerAuthenticateUserUseCaseMock = new Mock<ILogger<RecoveryAccessUserUseCase>>();
+            _useCase = new RecoveryAccessUserUseCase(_userRepositoryMock.Object, _passwordHasherMock.Object, _loggerAuthenticateUserUseCaseMock.Object);
         }
 
         private static RecoveryAccessUserCommand CreateSampleRecoveryAccessUserCommand(string? login = "LightPlay", string email = "test@example.com", string password = "ValidPass123.!")

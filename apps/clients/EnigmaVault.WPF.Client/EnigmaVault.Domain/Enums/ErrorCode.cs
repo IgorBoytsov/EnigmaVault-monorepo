@@ -5,6 +5,8 @@
         None,
         Unknown,
 
+        ApiError,
+
         AuthApiError,
         RegisterApiError,
         RecoveryApiError,

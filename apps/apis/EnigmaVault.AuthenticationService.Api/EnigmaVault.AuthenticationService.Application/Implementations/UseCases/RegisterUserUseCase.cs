@@ -9,6 +9,7 @@ using EnigmaVault.AuthenticationService.Domain.Constants;
 using EnigmaVault.AuthenticationService.Domain.DomainModels;
 using EnigmaVault.AuthenticationService.Domain.Enums;
 using EnigmaVault.AuthenticationService.Domain.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
 {
@@ -16,18 +17,23 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _argon2idPasswordHasher;
+        private readonly ILogger<RegisterUserUseCase> _logger;
 
         public RegisterUserUseCase(IUserRepository userRepository,
-                                   IPasswordHasher passwordHasher)
+                                   IPasswordHasher passwordHasher,
+                                   ILogger<RegisterUserUseCase> logger)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _argon2idPasswordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /*--Создание пользователя-------------------------------------------------------------------------*/
 
         public async Task<UserResult> RegisterAsync(RegisterUserCommand command)
         {
+            _logger.LogInformation("<<======Начало выполнения RegisterUserUseCase для Login: {Login}======>>", command.Login);
+
             var validationErrors = new List<string>();
 
             #region Валидация пустых строк 
@@ -108,7 +114,10 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
                 defaultRoleId);
 
             if (Domain is null)
+            {
+                _logger.LogError("Не удалось создать доменную сущность UserDomain для Login: {Login}. Сообщение от Domain: {DomainMessage}", command.Login, Message);
                 return UserResult.FailureResult(ErrorCode.DomainCreationError, "Ошибка создание домен модели.");
+            }
 
             #endregion
 
@@ -117,15 +126,19 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
                 var createdUserDomain = await _userRepository.CreateAsync(Domain);
 
                 if (createdUserDomain is null)
+                {
+                    _logger.LogError("Не удалось сохранить пользователя {Login} в репозитории.", command.Login);
                     return UserResult.FailureResult(ErrorCode.SaveUserError, "Ошибка сохранение пользователя.");
+                }
 
                 var userDto = createdUserDomain.ToDto();
 
+                _logger.LogInformation("<<======Конец регистрации в RegisterUserUseCase. RegisterUserUseCase успешно завершен для Login: {Login}. Создан UserId: {UserId}======>>", command.Login, userDto.IdUser);
                 return UserResult.SuccessResult(userDto);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //TODO: Сделать логирование ошибки
+                _logger.LogError(ex, "Непредвиденная ошибка в RegisterUserUseCase при обработке Login: {Login}", command.Login);
                 return UserResult.FailureResult(ErrorCode.UnknownError, "Во время регистрации произошла непредвиденная ошибка");
             }
         }

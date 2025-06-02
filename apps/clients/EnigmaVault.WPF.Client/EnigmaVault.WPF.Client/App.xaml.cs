@@ -20,6 +20,8 @@ using EnigmaVault.WPF.Client.ViewModels.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog;
+using System.Configuration;
 using System.Windows;
 
 namespace EnigmaVault.WPF.Client
@@ -30,38 +32,67 @@ namespace EnigmaVault.WPF.Client
     public partial class App : System.Windows.Application
     {
         public IServiceProvider ServiceProvider { get; private set; } = null!;
-        public static IHost AppHost { get; private set; } = null!;
 
         public static string? BaseApiUrl { get; private set; }
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            var services = new ServiceCollection();
-
             var configurationBuilder = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("apiconfig.json", optional: false, reloadOnChange: true);
+                .AddJsonFile("apiconfig.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
             IConfigurationRoot configuration = configurationBuilder.Build();
 
-            BaseApiUrl = configuration.GetValue<string>("BaseAuthenticationServiceUrl");
 
-            //TODO: Сделать кастомное исключение
-            if (string.IsNullOrEmpty(BaseApiUrl))
-                throw new Exception("Ключ 'BaseAuthenticationServiceUrl' не найден или пуст в файле apiconfig.json!");
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
+                .Enrich.WithProperty("AppVersion", "1.0.0")
+                .CreateLogger();
 
-            ConfigureServices(services);
-            ConfigureAutoMapper(services);
-            ConfigureWindow(services);
-            ConfigurePage(services);
-            ConfigureUseCases(services);
-            ConfigureHttpAndRepositories(services);
+            Log.Information("--- Приложение запустилось! ---");
 
-            ServiceProvider = services.BuildServiceProvider();
+            try
+            {
+                var services = new ServiceCollection();
 
-            ServiceProvider.GetService<IWindowNavigationService>()!.Open(WindowName.AuthenticationWindow);
+                services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
-            base.OnStartup(e);
+                BaseApiUrl = configuration.GetValue<string>("BaseAuthenticationServiceUrl");
+
+                if (string.IsNullOrEmpty(BaseApiUrl))
+                {
+                    Log.Fatal("Ключ 'BaseAuthenticationServiceUrl' не найден или пуст в файле apiconfig.json!");
+                    MessageBox.Show("Критическая ошибка: Не удалось загрузить конфигурацию API. См. лог-файл.", "Ошибка конфигурации", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Log.CloseAndFlush();
+                    Shutdown(-1);
+                    return;
+                }
+                Log.Information("BaseApiUrl сконфигурирован: {BaseApiUrl}", BaseApiUrl);
+
+                ConfigureServices(services);
+                ConfigureAutoMapper(services);
+                ConfigureWindow(services);
+                ConfigurePage(services);
+                ConfigureUseCases(services);
+                ConfigureHttpAndRepositories(services);
+
+                ServiceProvider = services.BuildServiceProvider();
+                Log.Information("ServiceProvider успешно собран.");
+
+                ServiceProvider.GetService<IWindowNavigationService>()!.Open(WindowName.AuthenticationWindow);
+                Log.Information("Запрошена навигация на AuthenticationWindow.");
+
+                base.OnStartup(e);
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Необработанное исключение во время запуска приложения!");
+                //TODO: Изменить на кастомное окно
+                MessageBox.Show($"Произошла критическая ошибка при запуске: {ex.Message}\n\nПодробности см. в лог-файле.", "Ошибка Запуска", MessageBoxButton.OK, MessageBoxImage.Error);
+                Log.CloseAndFlush(); 
+                Shutdown(-1);
+            }
         }
 
         private static void ConfigureWindow(ServiceCollection services)

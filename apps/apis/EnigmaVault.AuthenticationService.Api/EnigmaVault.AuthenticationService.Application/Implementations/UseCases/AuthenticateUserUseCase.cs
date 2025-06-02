@@ -5,7 +5,7 @@ using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
 using EnigmaVault.AuthenticationService.Application.DTOs.Results;
 using EnigmaVault.AuthenticationService.Application.Enums;
 using EnigmaVault.AuthenticationService.Application.Mappers;
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
 {
@@ -13,17 +13,26 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly ILogger<AuthenticateUserUseCase> _logger;
 
-        public AuthenticateUserUseCase(IUserRepository userRepository, IPasswordHasher passwordHasher)
+        public AuthenticateUserUseCase(IUserRepository userRepository,
+                                       IPasswordHasher passwordHasher,
+                                       ILogger<AuthenticateUserUseCase> logger)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
+            _logger = logger;
         }
 
         public async Task<UserResult> AuthenticateAsync(AuthenticateUserCommand command)
         {
             if (command is null)
+            {
+                _logger.LogError("Команда пришла без значений. {@command}", command);
                 throw new ArgumentNullException($"Значение {nameof(command)} было пустым.");
+            }
+
+            _logger.LogInformation("<<======Начало выполнения AuthenticateUserUseCase для Login: {Login} ======>>", command.Login);
 
             var validationErrors = new List<string>();
 
@@ -51,13 +60,14 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
                     return UserResult.FailureResult(ErrorCode.InvalidPassword, "Указан не верный пароль.");
 
                 await _userRepository.UpdateDateEntryAsync(userDomain.IdUser);
+
+                _logger.LogInformation("<<======Начало выполнения AuthenticateUserUseCase. AuthenticateUserUseCase успешно завершен для Login: {Login}======>>", command.Login);
                 return UserResult.SuccessResult(userDomain.ToDto());
 
             }
             catch (Exception ex)
             {
-                //TODO: Сделать логирование ошибки
-                Debug.WriteLine(ex.Message);
+                _logger.LogError(ex, "Непредвиденная ошибка в AuthenticateUserUseCase при обработке Login: {Login}", command.Login);
                 return UserResult.FailureResult(ErrorCode.UnknownError, "Во время аутентификации произошла непредвиденная ошибка");
             }
         }
