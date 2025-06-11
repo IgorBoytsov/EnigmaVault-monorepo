@@ -60,9 +60,10 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
                     return UserResult.FailureResult(ErrorCode.InvalidPassword, "Указан не верный пароль.");
 
                 await _userRepository.UpdateDateEntryAsync(userDomain.IdUser);
+                var argon2Params = _passwordHasher.GetParametersFromHash(userDomain.PasswordHash);
 
-                _logger.LogInformation("<<======Начало выполнения AuthenticateUserUseCase. AuthenticateUserUseCase успешно завершен для Login: {Login}======>>", command.Login);
-                return UserResult.SuccessResult(userDomain.ToDto());
+                _logger.LogInformation("<<======Конец выполнения AuthenticateUserUseCase. AuthenticateUserUseCase успешно завершен для Login: {Login}======>>", command.Login);
+                return UserResult.SuccessResult(userDomain.ToDto(), argon2Params);
 
             }
             catch (Exception ex)

@@ -31,7 +31,6 @@
     <Folder Include="Resources\Themes\Light\Styles\" />
     <Folder Include="Resources\Themes\Light\Templates\" />
     <Folder Include="Resources\Templates\" />
-    <Folder Include="Models\" />
   </ItemGroup>
 
   <ItemGroup>

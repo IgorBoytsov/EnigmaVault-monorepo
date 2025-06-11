@@ -11,6 +11,8 @@
         RegisterApiError,
         RecoveryApiError,
         NetworkError,
+        CreateError,
+        ResponseRepositoryError,
 
         InvalidResponseFormat,
 

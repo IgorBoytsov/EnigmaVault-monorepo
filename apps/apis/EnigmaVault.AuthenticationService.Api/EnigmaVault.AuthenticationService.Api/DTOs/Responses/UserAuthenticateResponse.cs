@@ -1,4 +1,6 @@
-﻿namespace EnigmaVault.AuthenticationService.Api.DTOs.Responses
+﻿using EnigmaVault.AuthenticationService.Application.DTOs.CryptoParameters;
+
+namespace EnigmaVault.AuthenticationService.Api.DTOs.Responses
 {
     public class UserAuthenticateResponse
     {
@@ -15,5 +17,7 @@
         public int? IdGender { get; set; }
 
         public int? IdCountry { get; set; }
+
+        public CryptoParameter CryptoParameters { get; set; }
     }
 }

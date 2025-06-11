@@ -1,4 +1,5 @@
 ﻿using EnigmaVault.Application.Abstractions.Repositories;
+using EnigmaVault.Application.Dtos.Secrets.CryptoService;
 using EnigmaVault.Domain.DomainModels;
 using EnigmaVault.Domain.Enums;
 using EnigmaVault.Domain.Results;
@@ -28,7 +29,7 @@ namespace EnigmaVault.Infrastructure.Repositories
             };
         }
 
-        public async Task<Result<UserDomain?>> AuthenticationAsync(string login, string password)
+        public async Task<Result<(UserDomain? User, CryptoParameters CryptoParameters)>> AuthenticationAsync(string login, string password)
         {
             string authenticationEndpoint = "api/users/authenticate";
 
@@ -53,29 +54,29 @@ namespace EnigmaVault.Infrastructure.Repositories
                     var user = UserDomain.Reconstitute(authResponse!.IdUser, authResponse.Login, authResponse.UserName, authResponse.Email, authResponse.Phone, authResponse.IdGender, authResponse.IdCountry);
                     _logger.LogInformation("Успешная аутентификация. Результат реконструкции {@user}", user);
 
-                    return Result<UserDomain?>.Success(user);
+                    return Result<ValueTuple<UserDomain?, CryptoParameters>>.Success((user, authResponse.CryptoParameters));
                 }
                 else
                 {
                     string errorContent = await response.Content.ReadAsStringAsync();
                     _logger.LogError("Ошибка аутентификация: {errorContent}", errorContent);
-                    return Result<UserDomain?>.Failure(new Error(ErrorCode.ApiError, $"Ошибка API: {response.StatusCode}. {errorContent}"));
+                    return Result<ValueTuple<UserDomain?, CryptoParameters>>.Failure(new Error(ErrorCode.ApiError, $"Ошибка API: {response.StatusCode}. {errorContent}"));
                 }
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogCritical(ex, "Сетевая ошибка при аутентификации");
-                return Result<UserDomain?>.Failure(new Error(ErrorCode.NetworkError, $"Сетевая ошибка: {ex.Message}"));
+                return Result<ValueTuple<UserDomain?, CryptoParameters>>.Failure(new Error(ErrorCode.NetworkError, $"Сетевая ошибка: {ex.Message}"));
             }
             catch (JsonException ex)
             {
                 _logger.LogCritical(ex, "JSON ошибка при аутентификации");
-                return Result<UserDomain?>.Failure(new Error(ErrorCode.InvalidResponseFormat, $"Ошибка формата ответа от API: {ex.Message}"));
+                return Result<ValueTuple<UserDomain?, CryptoParameters>>.Failure(new Error(ErrorCode.InvalidResponseFormat, $"Ошибка формата ответа от API: {ex.Message}"));
             }
             catch (Exception ex) 
             {
                 _logger.LogCritical(ex, "Непредвиденная ошибка при аутентификации");
-                return Result<UserDomain?>.Failure(new Error(ErrorCode.Unknown, $"Произошла непредвиденная ошибка: {ex.Message}"));
+                return Result<ValueTuple<UserDomain?, CryptoParameters>>.Failure(new Error(ErrorCode.Unknown, $"Произошла непредвиденная ошибка: {ex.Message}"));
             }
         }
 

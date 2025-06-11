@@ -1,4 +1,5 @@
 ﻿using EnigmaVault.AuthenticationService.Application.Abstractions.Hashers;
+using EnigmaVault.AuthenticationService.Application.DTOs.CryptoParameters;
 using Konscious.Security.Cryptography;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
@@ -49,64 +50,85 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.Hashers
 
         public bool VerifyPassword(string password, string storedHashString)
         {
-            if (string.IsNullOrEmpty(password))
+            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(storedHashString))
             {
-                _logger.LogError("Поле password {password} пришло пустое", password);
-                throw new ArgumentNullException(nameof(password));
-            }
-                
-            if (string.IsNullOrEmpty(storedHashString))
-            {
-                _logger.LogError("Поле storedHashString {storedHashString} пришло пустое", storedHashString);
-                throw new ArgumentNullException(nameof(storedHashString));
-            }
-               
-            string[] parts = storedHashString.Split(':');
-            if (parts.Length != 6 || parts[0] != "Argon2id")
-            {
-                _logger.LogDebug("Не верный формат данных для алгоритма Argon2id. Было получено: {storedHashString}.", storedHashString);
+                _logger.LogError("Password или storedHashString пустые.");
                 return false;
             }
 
-            byte[] salt;
-            byte[] storedHash;
-            int degreeOfParallelism;
-            int iterations;
-            int memorySizeKb;
+            var parseResult = ParseHashString(storedHashString);
 
-            try
+            if (!parseResult.Success)
             {
-                if (!int.TryParse(parts[1], out degreeOfParallelism) ||
-                    !int.TryParse(parts[2], out iterations) ||
-                    !int.TryParse(parts[3], out memorySizeKb))
-                {
-                    _logger.LogDebug("Не верные параметры для Argon2. Параметры: {@parts}", parts);
-                    return false;
-                }
-
-                salt = Convert.FromBase64String(parts[4]);
-                storedHash = Convert.FromBase64String(parts[5]);
-            }
-            catch (FormatException ex)
-            {
-                _logger.LogDebug(ex, "Ошибка парсинга компонентов хеша");
-                return false;
+                return false; 
             }
 
             byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
 
             var argon2 = new Argon2id(passwordBytes)
             {
-                Salt = salt,
-                DegreeOfParallelism = degreeOfParallelism,
-                Iterations = iterations,
-                MemorySize = memorySizeKb
+                Salt = parseResult.Parameters.Salt,
+                DegreeOfParallelism = parseResult.Parameters.DegreeOfParallelism,
+                Iterations = parseResult.Parameters.Iterations,
+                MemorySize = parseResult.Parameters.MemorySizeKb
             };
 
-            byte[] testHash = argon2.GetBytes(storedHash.Length);
+            byte[] testHash = argon2.GetBytes(parseResult.StoredHash.Length);
 
-            _logger.LogDebug("Верификация хеша была успешно пройдена");
-            return CryptographicOperations.FixedTimeEquals(testHash, storedHash);
+            bool verified = CryptographicOperations.FixedTimeEquals(testHash, parseResult.StoredHash);
+            if (verified)
+            {
+                _logger.LogDebug("Верификация хеша была успешно пройдена");
+            }
+
+            return verified;
+        }
+
+        public CryptoParameter GetParametersFromHash(string storedHashString)
+        {
+            var parseResult = ParseHashString(storedHashString);
+            if (!parseResult.Success)
+            {
+                return null;
+            }
+
+            return parseResult.Parameters;
+        }
+
+        private (bool Success, CryptoParameter Parameters, byte[] StoredHash) ParseHashString(string storedHashString)
+        {
+            if (string.IsNullOrEmpty(storedHashString))
+            {
+                _logger.LogDebug("storedHashString не может быть пустой.");
+                return (false, null, null);
+            }
+
+            string[] parts = storedHashString.Split(':');
+            if (parts.Length != 6 || parts[0] != "Argon2id")
+            {
+                _logger.LogDebug("Неверный формат данных для Argon2id: {storedHashString}", storedHashString);
+                return (false, null, null);
+            }
+
+            try
+            {
+                var parameters = new CryptoParameter
+                {
+                    DegreeOfParallelism = int.Parse(parts[1]),
+                    Iterations = int.Parse(parts[2]),
+                    MemorySizeKb = int.Parse(parts[3]),
+                    Salt = Convert.FromBase64String(parts[4])
+                };
+
+                byte[] storedHash = Convert.FromBase64String(parts[5]);
+
+                return (true, parameters, storedHash);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Ошибка парсинга компонентов хеша: {storedHashString}", storedHashString);
+                return (false, null, null);
+            }
         }
     }
 }

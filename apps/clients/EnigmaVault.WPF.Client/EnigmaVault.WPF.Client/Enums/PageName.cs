@@ -3,5 +3,6 @@
     internal enum PageName
     {
         ProfilePage,
+        UserSecrets,
     }
 }

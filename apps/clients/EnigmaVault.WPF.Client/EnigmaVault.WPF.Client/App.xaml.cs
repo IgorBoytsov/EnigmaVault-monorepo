@@ -4,10 +4,13 @@ using EnigmaVault.Application.Services.Abstractions;
 using EnigmaVault.Application.Services.Implementations;
 using EnigmaVault.Application.UseCases.Abstractions.CountryCase;
 using EnigmaVault.Application.UseCases.Abstractions.GanderCase;
+using EnigmaVault.Application.UseCases.Abstractions.SecretCase;
 using EnigmaVault.Application.UseCases.Abstractions.UserCase;
 using EnigmaVault.Application.UseCases.Implementations.CountryCase;
 using EnigmaVault.Application.UseCases.Implementations.GenderCase;
+using EnigmaVault.Application.UseCases.Implementations.SecretCase;
 using EnigmaVault.Application.UseCases.Implementations.UserCase;
+using EnigmaVault.Infrastructure.Ioc;
 using EnigmaVault.Infrastructure.Repositories;
 using EnigmaVault.WPF.Client.Enums;
 using EnigmaVault.WPF.Client.Factories.Abstractions;
@@ -19,9 +22,7 @@ using EnigmaVault.WPF.Client.ViewModels.Pages;
 using EnigmaVault.WPF.Client.ViewModels.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Serilog;
-using System.Configuration;
 using System.Windows;
 
 namespace EnigmaVault.WPF.Client
@@ -33,7 +34,8 @@ namespace EnigmaVault.WPF.Client
     {
         public IServiceProvider ServiceProvider { get; private set; } = null!;
 
-        public static string? BaseApiUrl { get; private set; }
+        public static string? BaseAuthApiUrl { get; private set; }
+        public static string? BaseSecretApiApiUrl { get; private set; }
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -58,9 +60,10 @@ namespace EnigmaVault.WPF.Client
 
                 services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
-                BaseApiUrl = configuration.GetValue<string>("BaseAuthenticationServiceUrl");
+                BaseAuthApiUrl = configuration.GetValue<string>("BaseAuthenticationServiceUrl");
+                BaseSecretApiApiUrl = configuration.GetValue<string>("BaseSecretApiServiceUrl");
 
-                if (string.IsNullOrEmpty(BaseApiUrl))
+                if (string.IsNullOrEmpty(BaseAuthApiUrl))
                 {
                     Log.Fatal("Ключ 'BaseAuthenticationServiceUrl' не найден или пуст в файле apiconfig.json!");
                     MessageBox.Show("Критическая ошибка: Не удалось загрузить конфигурацию API. См. лог-файл.", "Ошибка конфигурации", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -68,7 +71,19 @@ namespace EnigmaVault.WPF.Client
                     Shutdown(-1);
                     return;
                 }
-                Log.Information("BaseApiUrl сконфигурирован: {BaseApiUrl}", BaseApiUrl);
+
+                if (string.IsNullOrEmpty(BaseSecretApiApiUrl))
+                {
+                    Log.Fatal("Ключ 'BaseSecretApiServiceUrl' не найден или пуст в файле apiconfig.json!");
+                    MessageBox.Show("Критическая ошибка: Не удалось загрузить конфигурацию API. См. лог-файл.", "Ошибка конфигурации", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Log.CloseAndFlush();
+                    Shutdown(-1);
+                    return;
+                }
+
+                Log.Information("BaseApiUrl сконфигурирован: {BaseApiUrl}", BaseAuthApiUrl);
+
+                services.AddInfrastructureServices();
 
                 ConfigureServices(services);
                 ConfigureAutoMapper(services);
@@ -95,6 +110,8 @@ namespace EnigmaVault.WPF.Client
             }
         }
 
+        /*--Конфигурации----------------------------------------------------------------------------------*/
+
         private static void ConfigureWindow(ServiceCollection services)
         {
             services.AddTransient<IWindowFactory, AuthenticationWindowFactory>();
@@ -107,10 +124,14 @@ namespace EnigmaVault.WPF.Client
         }
 
         private static void ConfigurePage(ServiceCollection services)
-        {
+        { 
             services.AddTransient<IPageFactory, ProfilePageFactory>();
             services.AddTransient<ProfilePageVM>();
             services.AddSingleton<Func<ProfilePageVM>>(provider => () => provider.GetRequiredService<ProfilePageVM>());
+
+            services.AddTransient<IPageFactory, UserSecretsFactory>();
+            services.AddTransient<UserSecretsPageVM>();
+            services.AddSingleton<Func<UserSecretsPageVM>>(provider => () => provider.GetRequiredService<UserSecretsPageVM>());
         }
 
         private static void ConfigureServices(ServiceCollection services)
@@ -119,6 +140,7 @@ namespace EnigmaVault.WPF.Client
             services.AddSingleton<IPageNavigationService, PageNavigationService>();
 
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
+            services.AddSingleton<ISecretsCryptoService, SecretsCryptoService>();
         }
        
         private static void ConfigureUseCases(ServiceCollection services)
@@ -129,16 +151,30 @@ namespace EnigmaVault.WPF.Client
 
             services.AddScoped<IGetGendersUseCase, GetGendersUseCase>();
             services.AddScoped<IGetCountriesUseCase, GetCountriesUseCase>();
+
+            services.AddScoped<ICreateSecretUseCase, CreateSecretUseCase>();
+            services.AddScoped<IGetAllSecretsUseCase, GetAllSecretsUseCase>();
+            services.AddScoped<IDeleteSecretUseCase, DeleteSecretUseCase>();
+
+            services.AddScoped<IUpdateSecretUseCase, UpdateSecretUseCase>();
+            services.AddScoped<IUpdateEncryptedDataUseCase, UpdateEncryptedDataUseCase>();
+            services.AddScoped<IUpdateFavoriteUseCase, UpdateFavoriteUseCase>();
+            services.AddScoped<IUpdateMetaDataUseCase, UpdateMetaDataUseCase>();
+            services.AddScoped<IUpdateNoteUseCase, UpdateNoteUseCase>();
         }
 
         private static void ConfigureHttpAndRepositories(ServiceCollection services)
         {
             var authApi = "AuthApiClient";
-            services.AddHttpClient(authApi, client => client.BaseAddress = new Uri(BaseApiUrl!));
+            var secretApi = "SecretApiClient";
+            services.AddHttpClient(authApi, client => client.BaseAddress = new Uri(BaseAuthApiUrl!));
+            services.AddHttpClient(secretApi, client => client.BaseAddress = new Uri(BaseSecretApiApiUrl!));
 
             services.AddHttpClient<IUserRepository, ApiUserRepository>(authApi);
             services.AddHttpClient<IGenderRepository, ApiGenderRepository>(authApi);
             services.AddHttpClient<ICountryRepository, ApiCountryRepository>(authApi);
+
+            services.AddHttpClient<ISecretRepository, ApiSecretRepository>(secretApi);
         }
 
         private static void ConfigureAutoMapper(ServiceCollection services) => services.AddAutoMapper(typeof(UserProfile).Assembly);

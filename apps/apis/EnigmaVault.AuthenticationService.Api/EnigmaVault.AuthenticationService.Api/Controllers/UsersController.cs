@@ -5,6 +5,7 @@ using EnigmaVault.AuthenticationService.Application.Abstractions.Providers;
 using EnigmaVault.AuthenticationService.Application.Abstractions.UseCases;
 using EnigmaVault.AuthenticationService.Application.DTOs;
 using EnigmaVault.AuthenticationService.Application.DTOs.Commands;
+using EnigmaVault.AuthenticationService.Application.DTOs.CryptoParameters;
 using EnigmaVault.AuthenticationService.Application.DTOs.Results;
 using EnigmaVault.AuthenticationService.Application.Enums;
 using EnigmaVault.AuthenticationService.Application.Implementations.Providers;
@@ -186,7 +187,7 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
 
         /*--Авторизация-----------------------------------------------------------------------------------*/
 
-        //TODO: Добавить JWT токен
+        //TODO: Добавить JWT токен. А вместе с ним реализовать отдельный ендпоинт - Me (К примеру ), который будет возвращать все нужные данные о пользователе.
         [HttpPost("authenticate")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -210,6 +211,7 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
             }
 
             UserDto user;
+            CryptoParameter cryptoParameter;
             AuthenticateUserCommand command = apiRequest.ToMapCommand();
 
             _logger.LogDebug("Детализация запроса на аутентификацию: Login={Login}, PasswordLength={PasswordLength}", command.Login, command.Password.Length);
@@ -308,6 +310,7 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
                 }
 
                 user = result.User!;
+                cryptoParameter = result.CryptoParameter!;
             }
             catch (Exception ex)
             {
@@ -329,6 +332,7 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
                 Phone = user.Phone,
                 IdCountry = user.IdCountry,
                 IdGender = user.IdGender,
+                CryptoParameters = cryptoParameter
             };
 
             _logger.LogInformation("<<======Аутентификации пользователя {Login} успешно завершена======>>", userAuthResponse.Login);

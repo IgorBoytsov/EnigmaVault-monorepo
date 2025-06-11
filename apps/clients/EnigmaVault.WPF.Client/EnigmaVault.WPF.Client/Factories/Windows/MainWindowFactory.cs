@@ -23,7 +23,7 @@ namespace EnigmaVault.WPF.Client.Factories.Windows
             {
                 var mainFrame = window.FindName("MainFrame") as Frame;
                 _pageNavigationService.RegisterFrame(FrameName.MainFrame, mainFrame);
-                _pageNavigationService.Navigate(PageName.ProfilePage, FrameName.MainFrame);
+                _pageNavigationService.Navigate(PageName.UserSecrets, FrameName.MainFrame);
             };
 
             return window;

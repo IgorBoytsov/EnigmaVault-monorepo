@@ -1,0 +1,23 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
+WORKDIR /app
+
+COPY EnigmaVault.SecretService.Api/*.csproj ./EnigmaVault.SecretService.Api/
+COPY EnigmaVault.SecretService.Application/*.csproj ./EnigmaVault.SecretService.Application/
+COPY EnigmaVault.SecretService.Domain/*.csproj ./EnigmaVault.SecretService.Domain/
+COPY EnigmaVault.SecretService.Infrastructure/*.csproj ./EnigmaVault.SecretService.Infrastructure/
+
+RUN dotnet restore "EnigmaVault.SecretService.Api/EnigmaVault.SecretService.Api.csproj"
+
+COPY . ./
+
+RUN dotnet publish "EnigmaVault.SecretService.Api/EnigmaVault.SecretService.Api.csproj" -c Release -o /app/publish --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+WORKDIR /app
+
+COPY --from=build-env /app/publish .
+
+ENV ASPNETCORE_HTTP_PORTS=7001
+EXPOSE 7001
+
+ENTRYPOINT ["dotnet", "EnigmaVault.SecretService.Api.dll"]
