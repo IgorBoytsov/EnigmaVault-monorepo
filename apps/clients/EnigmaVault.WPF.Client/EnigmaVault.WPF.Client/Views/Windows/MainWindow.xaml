@@ -3,11 +3,162 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:EnigmaVault.WPF.Client.Views.Windows"
+        xmlns:local="clr-namespace:EnigmaVault.WPF.Client.Views.Windows" 
+        xmlns:enum="clr-namespace:EnigmaVault.WPF.Client.Enums" 
+        xmlns:windows="clr-namespace:EnigmaVault.WPF.Client.ViewModels.Windows" 
+        d:DataContext="{d:DesignInstance Type=windows:MainWindowVM}"
         mc:Ignorable="d"
+        WindowStyle="ThreeDBorderWindow"
         WindowStartupLocation="CenterScreen"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Frame x:Name="MainFrame"/>
-    </Grid>
+        Height="480" Width="800"
+        MinHeight="700" MinWidth="1000"
+        Title="MainWindow">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="30"
+                      GlassFrameThickness="0"
+                      CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Border x:Name="MainWindowBorder" Background="{StaticResource Control.Background}" BorderBrush="LightCoral" BorderThickness="0">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height ="Auto"/>
+                <RowDefinition Height ="*"/>
+            </Grid.RowDefinitions>
+
+            <!--#region Header -->
+
+            <Grid Grid.Row="0" Height="Auto" Background="Transparent" Grid.ColumnSpan="2">
+
+                <!--#region Кнопки измение WindowStat -->
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="1">
+
+                    <Button Style="{StaticResource Button.Management.Window}" 
+                            Command="{Binding MinimizeWindowCommand}" 
+                            CommandParameter="{x:Static enum:WindowName.MainWindow}"
+                            WindowChrome.IsHitTestVisibleInChrome="True" 
+                            ToolTip="Minimize">
+                        <Viewbox Width="17" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Control Template="{StaticResource Minimize}" Foreground="White"/>
+                        </Viewbox>
+                    </Button>
+
+                    <Button x:Name="RestoreButton" 
+                            Visibility="Collapsed" 
+                            Style="{StaticResource Button.Management.Window}" 
+                            Command="{Binding RestoreWindowCommand}" 
+                            CommandParameter="{x:Static enum:WindowName.MainWindow}"
+                            WindowChrome.IsHitTestVisibleInChrome="True" 
+                            ToolTip="Restore">
+                        <Viewbox Width="17" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Control Template="{StaticResource Restore}" Foreground="White"/>
+                        </Viewbox>
+                    </Button>
+
+                    <Button x:Name="MaximizeButton" 
+                            Visibility="Visible" 
+                            Style="{StaticResource Button.Management.Window}" 
+                            Command="{Binding MaximizeWindowCommand}"
+                            CommandParameter="{x:Static enum:WindowName.MainWindow}"
+                            WindowChrome.IsHitTestVisibleInChrome="True" 
+                            ToolTip="Maximize">
+                        <Viewbox Width="17" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Control Template="{StaticResource Maximize}" Foreground="White"/>
+                        </Viewbox>
+                    </Button>
+
+                    <Button Style="{StaticResource Button.Management.Window}"  
+                            Command="{Binding ShutDownAppCommand}"
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            ToolTip="Close">
+                        <Viewbox Width="17" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Control Template="{StaticResource Close}" Foreground="White"/>
+                        </Viewbox>
+                    </Button>
+
+                </StackPanel>
+
+                <!--#endregion-->
+
+            </Grid>
+
+            <!--#endregion-->
+
+            <!--#region Content -->
+
+            <Grid Grid.Row="1" Background="{StaticResource Control.Background}" Margin="0,10,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!--#region Боковое меню -->
+
+                <DockPanel Margin="0,0,0,0">
+
+                    <Button Style="{StaticResource Button.MainWindow.SideMenu}"
+                            Command="{Binding OpenProfilePageCommand}"
+                            DockPanel.Dock="Top">
+                        <StackPanel>
+                            <Viewbox>
+                                <Control Template="{StaticResource Profile}"/>
+                            </Viewbox>
+                            <!--<TextBlock Text="Профиль" HorizontalAlignment="Center" Foreground="#D0D0D0"/>-->
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource Button.MainWindow.SideMenu}"
+                            Command="{Binding OpenSecretPageCommand}"
+                            DockPanel.Dock="Top">
+                        <StackPanel>
+                            <Viewbox>
+                                <Control Template="{StaticResource PasswordKey}"/>
+                            </Viewbox>
+                            <!--<TextBlock Text="Пароли" HorizontalAlignment="Center" Foreground="#D0D0D0"/>-->
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource Button.MainWindow.SideMenu}"
+                            DockPanel.Dock="Top">
+                        <StackPanel>
+                            <Viewbox>
+                                <Control Template="{StaticResource NoteBook}" />
+                            </Viewbox>
+                            <!--<TextBlock Text="Заметки" HorizontalAlignment="Center" Foreground="#D0D0D0"/>-->
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource Button.MainWindow.SideMenu}"
+                            DockPanel.Dock="Top">
+                        <StackPanel>
+                            <Viewbox>
+                                <Control Template="{StaticResource TasksList}" />
+                            </Viewbox>
+                            <!--<TextBlock Text="Задачи" HorizontalAlignment="Center" Foreground="#D0D0D0"/>-->
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource Button.MainWindow.SideMenu}"
+                            VerticalAlignment="Bottom">
+                        <Viewbox>
+                            <Path Fill="White" Data="{StaticResource Setting}" />
+                        </Viewbox>
+                    </Button>
+                </DockPanel>
+
+                <!--#endregion-->
+
+                <Frame x:Name="MainFrame" Grid.Column="1" NavigationUIVisibility="Hidden" Visibility="Visible"/>
+
+            </Grid>
+
+            <!--#endregion-->
+
+        </Grid>
+    </Border>
+
 </Window>
+<!--Background="#161617-->
+<!--Background="#22252A"-->

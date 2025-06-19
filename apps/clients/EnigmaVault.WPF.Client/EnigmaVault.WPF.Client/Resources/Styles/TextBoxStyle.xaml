@@ -18,5 +18,38 @@
     </Style>
 
     <!--#endregion-->
-    
+
+    <ControlTemplate x:Key="BaseTemplate" TargetType="TextBox" >
+        <Border x:Name="border" 
+                BorderBrush="{StaticResource Border.TextBox.BorderBrush}"
+                Background="{TemplateBinding Background}"
+                CornerRadius="0"
+                BorderThickness="0,0,0,3">
+            <ScrollViewer x:Name="PART_ContentHost" 
+                          Focusable="false"
+                          Foreground="#F0F1F3"
+                          HorizontalScrollBarVisibility="Hidden" 
+                          VerticalScrollBarVisibility="Hidden"/>
+        </Border>
+
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsFocused" Value="True">
+                <Setter TargetName="border" Property="BorderBrush" Value="#474747"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="border" Property="BorderBrush" Value="#474747"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="TextBox.InputData" TargetType="TextBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Margin" Value="0,5,0,5"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="Margin" Value="0,5,0,5"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CaretBrush" Value="White"/>
+        <Setter Property="Template" Value="{StaticResource BaseTemplate}"/>
+    </Style>
+
 </ResourceDictionary>

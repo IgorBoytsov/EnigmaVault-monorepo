@@ -1,10 +1,22 @@
 ﻿<Application x:Class="EnigmaVault.WPF.Client.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:EnigmaVault.WPF.Client">
+             xmlns:local="clr-namespace:EnigmaVault.WPF.Client" 
+             xmlns:converters="clr-namespace:EnigmaVault.WPF.Client.Resources.ValueConverters">
     <Application.Resources>
         <ResourceDictionary>
+
+            <converters:RecordDateUpdateConverter x:Key="RecordDateUpdateConverter"/>
+
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources\PathElements\Icons.xaml"/>
+
+                <ResourceDictionary Source="Resources\Brushes\SharedBrushes.xaml"/>
+                
+                <ResourceDictionary Source="Resources\Styles\BorderStyle.xaml"/>
+                <ResourceDictionary Source="Resources\Styles\ButtonStyle.xaml"/>
+                <ResourceDictionary Source="Resources\Styles\GridSplitterStyle.xaml"/>
+                <ResourceDictionary Source="Resources\Styles\ScrollViewerStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\TextBlockStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\TextBoxStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>

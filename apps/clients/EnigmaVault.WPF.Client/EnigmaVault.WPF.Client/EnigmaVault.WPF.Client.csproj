@@ -26,11 +26,9 @@
   <ItemGroup>
     <Folder Include="Assets\Icons\" />
     <Folder Include="Assets\Fonts\" />
-    <Folder Include="Resources\Themes\Dark\Styles\" />
-    <Folder Include="Resources\Themes\Dark\Templates\" />
-    <Folder Include="Resources\Themes\Light\Styles\" />
-    <Folder Include="Resources\Themes\Light\Templates\" />
     <Folder Include="Resources\Templates\" />
+    <Folder Include="Resources\Themes\Dark\" />
+    <Folder Include="Resources\Themes\Light\" />
   </ItemGroup>
 
   <ItemGroup>

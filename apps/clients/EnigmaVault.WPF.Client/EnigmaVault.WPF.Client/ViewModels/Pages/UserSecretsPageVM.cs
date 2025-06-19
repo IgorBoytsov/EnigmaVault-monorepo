@@ -6,9 +6,9 @@ using EnigmaVault.WPF.Client.Enums;
 using EnigmaVault.WPF.Client.Models.Display;
 using EnigmaVault.WPF.Client.ViewModels.Abstractions;
 using System.Collections.ObjectModel;
-using System.Security.Authentication.ExtendedProtection;
+using System.Diagnostics;
 using System.Windows;
-using System.Windows.Documents;
+using System.Windows.Controls;
 
 namespace EnigmaVault.WPF.Client.ViewModels.Pages
 {
@@ -49,6 +49,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             _updateMetaDataUseCase = updateMetaDataUseCase;
             _updateNoteUseCase = updateNoteUseCase;
             _updateSecretUseCase = updateSecretUseCase;
+
+            SetVisibilityEditMenu(Visibility.Collapsed, 0);
 
             SetValueCommands();
 
@@ -192,18 +194,43 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             }
         }
 
-        private bool _isFavorite;
-        public bool IsFavorite
+        //private bool _isFavorite;
+        //public bool IsFavorite
+        //{
+        //    get => _isFavorite;
+        //    set
+        //    {
+        //        SetProperty(ref _isFavorite, value);
+        //        UpdateSecretCommand?.RaiseCanExecuteChanged();
+        //        UpdateFavoriteCommand?.RaiseCanExecuteChanged();
+        //    }
+        //}
+
+
+        #endregion
+
+        #region Управление меню с добавлением\редактированием данных
+
+        private Visibility _visibilityEditMenu;
+        public Visibility VisibilityEditMenu
         {
-            get => _isFavorite;
-            set
-            {
-                SetProperty(ref _isFavorite, value);
-                UpdateSecretCommand?.RaiseCanExecuteChanged();
-                UpdateFavoriteCommand?.RaiseCanExecuteChanged();
-            }
+            get => _visibilityEditMenu;
+            set => SetProperty(ref _visibilityEditMenu, value);
         }
 
+        private GridLength _editMenuColumnWidth = new GridLength(0);
+        public GridLength EditMenuColumnWidth
+        {
+            get => _editMenuColumnWidth;
+            set => SetProperty(ref _editMenuColumnWidth, value);
+        }
+
+        private int _minWidthEditMenu;
+        public int MinWidthEditMenu
+        {
+            get => _minWidthEditMenu;
+            set => SetProperty(ref _minWidthEditMenu, value);
+        }
 
         #endregion
 
@@ -219,6 +246,11 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             UpdateMetadataCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateMetadataCommand, CanExecute_UpdateMetadataCommand);
             UpdateFavoriteCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateFavoriteCommand, CanExecute_UpdateFavoriteCommand);
             UpdateNoteCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateNoteCommand, CanExecute_UpdateNoteCommand);
+
+            OpenUrlCommand = new RelayCommand<string>(Execute_OpenUrlCommand, CanExecute_OpenUrlCommand);
+
+            ShowEditMenuCommand = new RelayCommand<EncryptedSecretViewModel>(Execute_ShowEditMenuCommand, CanExecute_ShowEditMenuCommand);
+            HideEditMenuCommand = new RelayCommand<ColumnDefinition>(Execute_HideEditMenuCommand, CanExecute_HideEditMenuCommand);
         }
 
         /*--Create--*/
@@ -318,7 +350,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             OnPropertyChanged(nameof(SelectedSecretData));
         }
 
-        private bool CanExecute_UpdateSecretCommand(EncryptedSecretViewModel secret) => true;
+        private bool CanExecute_UpdateSecretCommand(EncryptedSecretViewModel secret) => secret != null;
 
         #endregion
 
@@ -349,10 +381,6 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             secret.EncryptedData = result.Value.EncryptedData;
             secret.Nonce = result.Value.Nonce;
             secret.DateUpdate = result.Value.DateUpdated.ToLocalTime();
-
-            SelectedSecretData = secret;
-
-            OnPropertyChanged(nameof(SelectedSecretData));
         }
 
         private bool CanExecute_UpdateEncryptedDataCommand(EncryptedSecretViewModel secret) 
@@ -383,7 +411,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
         }
 
         private bool CanExecute_UpdateMetadataCommand(EncryptedSecretViewModel secret)
-            => secret is not null && (!string.IsNullOrWhiteSpace(NameSecret) || !string.IsNullOrWhiteSpace(UrlSecret));
+           => secret is not null && !string.IsNullOrWhiteSpace(NameSecret);
 
         #endregion
 
@@ -393,16 +421,17 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         private async Task Execute_UpdateFavoriteCommand(EncryptedSecretViewModel secret)
         {
-            var result = await _updateFavoriteUseCase.UpdateFavoriteAsync(secret.IdSecret, IsFavorite);
+            var result = await _updateFavoriteUseCase.UpdateFavoriteAsync(secret.IdSecret, secret.IsFavorite);
 
             if (!result.IsSuccess)
             {
                 var errors = string.Join(";", result.Errors);
                 MessageBox.Show(errors);
+
+                secret.IsFavorite = !secret.IsFavorite;
                 return;
             }
 
-            secret.IsFavorite = IsFavorite;
             secret.DateUpdate = result.Value.ToLocalTime();
 
             OnPropertyChanged(nameof(SelectedSecretData));
@@ -427,13 +456,78 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                 return;
             }
 
-            secret.IsFavorite = IsFavorite;
+            secret.Notes = NotesSecret;
             secret.DateUpdate = result.Value.ToLocalTime();
 
             OnPropertyChanged(nameof(SelectedSecretData));
         }
 
         private bool CanExecute_UpdateNoteCommand(EncryptedSecretViewModel secret) => secret is not null;
+
+        #endregion
+
+        /*--Shared--*/
+
+        #region [OpenUrlCommand] - Переход по ссылки
+
+        public RelayCommand<string>? OpenUrlCommand { get; private set; }
+
+        private void Execute_OpenUrlCommand(string url)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo(url)
+                {
+                    UseShellExecute = true
+                };
+
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Не удалось открыть ссылку: {ex.Message}");
+            }
+        }
+
+        private bool CanExecute_OpenUrlCommand(string url) => !string.IsNullOrEmpty(url);
+
+        #endregion
+
+        /*--Управление EditMenu--*/
+
+        #region [ShowEditMenuCommand] - Показать меню редактирование
+
+        public RelayCommand<EncryptedSecretViewModel>? ShowEditMenuCommand { get; private set; }
+
+        private void Execute_ShowEditMenuCommand(EncryptedSecretViewModel secret) 
+        {
+            SetVisibilityEditMenu(Visibility.Visible, 270);
+
+            EditMenuColumnWidth = new GridLength(1, GridUnitType.Star);
+
+            if (secret is null)
+                SetNulEditFields();
+            else
+                SelectedSecretData = secret;
+        } 
+
+        private bool CanExecute_ShowEditMenuCommand(EncryptedSecretViewModel secret) => true;
+
+        #endregion
+
+        #region [HideEditMenuCommand] - Скрыть меню редактирование
+
+        public RelayCommand<ColumnDefinition>? HideEditMenuCommand { get; private set; }
+
+        private void Execute_HideEditMenuCommand(ColumnDefinition columnToReset)
+        {
+            SetVisibilityEditMenu(Visibility.Collapsed, 0);
+            //columnToReset.Width = GridLength.Auto;
+            EditMenuColumnWidth = new GridLength(0);
+        } 
+
+        private bool CanExecute_HideEditMenuCommand(ColumnDefinition columnToReset) 
+            => VisibilityEditMenu != Visibility.Collapsed || VisibilityEditMenu != Visibility.Hidden;
 
         #endregion
 
@@ -481,7 +575,34 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
             UrlSecret = secret.Url;
             NotesSecret = secret.Notes;
-            IsFavorite = secret.IsFavorite;
+        }
+
+        #endregion
+
+        #region Сброс полей для добавление\редактирование данных
+
+        private void SetNulEditFields()
+        {
+            NameSecret = string.Empty;
+            UsernameSecret = string.Empty;
+            PasswordSecret = string.Empty;
+            EmailSecret = string.Empty;
+            RecoveryKeysSecret = string.Empty;
+            SecretWorldSecret = string.Empty;
+            UrlSecret = string.Empty;
+            NotesSecret = string.Empty;
+            SelectedSecretData = null;
+        }
+
+        #endregion
+
+        #region Отображение меню изменение и добавление данных
+
+        private void SetVisibilityEditMenu(Visibility visibility, int minWidthEditMenu)
+        {
+            VisibilityEditMenu = visibility;
+            EditMenuColumnWidth = new GridLength(minWidthEditMenu);
+            MinWidthEditMenu = minWidthEditMenu;
         }
 
         #endregion
