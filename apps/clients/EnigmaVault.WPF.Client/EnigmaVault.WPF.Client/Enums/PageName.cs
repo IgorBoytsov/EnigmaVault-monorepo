@@ -2,6 +2,7 @@
 {
     internal enum PageName
     {
+        None,
         ProfilePage,
         UserSecrets,
     }

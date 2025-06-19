@@ -10,6 +10,7 @@ namespace EnigmaVault.WPF.Client.Services.Implementations
     {
         private Dictionary<FrameName, Frame> _frames = [];
         private Dictionary<PageName, Page> _pages = [];
+        private Dictionary<FrameName, PageName> _currenDisplayedPage = [];
         private readonly Dictionary<string, IPageFactory> _pagesFactories = [];
 
         public PageNavigationService(IEnumerable<IPageFactory> pageFactories)
@@ -30,6 +31,7 @@ namespace EnigmaVault.WPF.Client.Services.Implementations
                 if (_frames.TryGetValue(frameName, out var frame))
                 {
                     frame.Navigate(pageExist);
+                    SetCurrentDisplayedPage(frameName, pageName);
                 }
                 else throw new Exception($"Frame с именем '{frameName}' не зарегистрировано.");
             }
@@ -42,6 +44,7 @@ namespace EnigmaVault.WPF.Client.Services.Implementations
                         var page = factory.CreatePage();
                         _pages.TryAdd(pageName, page);
                         frame.Navigate(page);
+                        SetCurrentDisplayedPage(frameName, pageName);
                     }
                     else throw new Exception($"Frame с именем '{frameName}' не зарегистрирован.");
                 }
@@ -79,8 +82,19 @@ namespace EnigmaVault.WPF.Client.Services.Implementations
             {
                 frameExist.Navigate(null);
                 _pages.Remove(pageName);
+                SetDefaultCurrentDisplayedPage(frameName);
             }
             else throw new Exception("Такой страницы либо фрейма не существует.");
         }
+
+        public PageName GetCurrentDisplayedPage(FrameName frameName) => _currenDisplayedPage.GetValueOrDefault(frameName);
+
+        #region Вспомогательные методы
+
+        private void SetCurrentDisplayedPage(FrameName frame, PageName page) => _currenDisplayedPage[frame] = page;
+
+        private void SetDefaultCurrentDisplayedPage(FrameName frame) => _currenDisplayedPage[frame] = PageName.None;
+
+        #endregion
     }
 }
