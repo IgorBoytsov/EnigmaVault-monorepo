@@ -86,12 +86,12 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
 
         public async Task<Result<DateTime>> UpdateAsync(SecretDomain secret)
             => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
-                predicate: secretInDb => secretInDb.IdSecret == secretInDb.IdSecret,
+                predicate: secretInDb => secretInDb.IdSecret == secret.IdSecret,
                 setPropertyCalls: us => us
                     .SetProperty(p => p.EncryptedData, secret.EncryptedData)
                     .SetProperty(p => p.Nonce, secret.Nonce)
                     .SetProperty(p => p.ServiceName, secret.ServiceName)
-                    .SetProperty(p => p.Url, secret.Url)
+                    .SetProperty(p => p.Url, secret.Url) 
                     .SetProperty(p => p.Notes, secret.Notes)
                     .SetProperty(p => p.SchemaVersion, secret.SchemaVersion)
                     .SetProperty(p => p.IsFavorite, secret.IsFavorite)
