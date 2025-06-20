@@ -22,7 +22,7 @@ namespace EnigmaVault.Application.UseCases.Implementations.SecretCase
         private readonly ISecretsCryptoService _secretsCryptoService = secretsCryptoService;
         private readonly ILogger<CreateSecretUseCase> _logger = logger;
 
-        public async Task<Result<EncryptedSecret>> Create(string serviceName, string username, string password, string email, string secretWord, string? url, string? notes, bool isFavorite)
+        public async Task<Result<EncryptedSecret>> Create(string serviceName, string username, string password, string email, string secretWord, string recoveryKeysSecret, string? url, string? notes, bool isFavorite)
         {
             _logger.LogDebug("Проверка валидации");
             var validationErrors = new List<Error>();
@@ -48,6 +48,7 @@ namespace EnigmaVault.Application.UseCases.Implementations.SecretCase
                 Password = password,
                 Email = email,
                 SecretWord = secretWord,
+                RecoveryKeys = recoveryKeysSecret,
             };
 
             var metaData = new SecretMetadata

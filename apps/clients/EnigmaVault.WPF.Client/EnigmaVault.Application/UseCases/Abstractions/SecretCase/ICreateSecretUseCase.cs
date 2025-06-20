@@ -5,6 +5,6 @@ namespace EnigmaVault.Application.UseCases.Abstractions.SecretCase
 {
     public interface ICreateSecretUseCase
     {
-        Task<Result<EncryptedSecret>> Create(string serviceName, string username, string password, string email, string secretWord, string? url, string? notes, bool isFavorite);
+        Task<Result<EncryptedSecret>> Create(string serviceName, string username, string password, string email, string secretWord, string recoveryKeysSecret, string? url, string? notes, bool isFavorite);
     }
 }
