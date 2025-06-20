@@ -234,6 +234,21 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         #endregion
 
+        #region Переключение вида отображаемых данных
+
+        private TemplateType _selectedTemplate = TemplateType.Detailed;
+        public TemplateType SelectedTemplate
+        {
+            get => _selectedTemplate;
+            set 
+            {
+                SetProperty(ref _selectedTemplate, value);
+                SwitchTemplateSecretsCommand?.RaiseCanExecuteChanged();
+            } 
+        }
+
+        #endregion
+
         /*--Команды---------------------------------------------------------------------------------------*/
 
         private void SetValueCommands()
@@ -248,6 +263,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             UpdateNoteCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateNoteCommand, CanExecute_UpdateNoteCommand);
 
             OpenUrlCommand = new RelayCommand<string>(Execute_OpenUrlCommand, CanExecute_OpenUrlCommand);
+            SwitchTemplateSecretsCommand = new RelayCommand<TemplateType>(Execute_SwitchTemplateSecretsCommand, CanExecute_SwitchTemplateSecretsCommand);
 
             ShowEditMenuCommand = new RelayCommand<EncryptedSecretViewModel>(Execute_ShowEditMenuCommand, CanExecute_ShowEditMenuCommand);
             HideEditMenuCommand = new RelayCommand<ColumnDefinition>(Execute_HideEditMenuCommand, CanExecute_HideEditMenuCommand);
@@ -261,7 +277,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         private async Task Execute_SaveSecretCommand()
         {
-            var result = await _createSecretUseCase.Create(NameSecret!, UsernameSecret!, PasswordSecret!, EmailSecret, SecretWorldSecret, UrlSecret, NotesSecret, false);
+            var result = await _createSecretUseCase.Create(NameSecret!, UsernameSecret!, PasswordSecret!, EmailSecret!, SecretWorldSecret!, RecoveryKeysSecret!, UrlSecret, NotesSecret, false);
 
             if (!result.IsSuccess)
             {
@@ -421,19 +437,21 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         private async Task Execute_UpdateFavoriteCommand(EncryptedSecretViewModel secret)
         {
-            var result = await _updateFavoriteUseCase.UpdateFavoriteAsync(secret.IdSecret, secret.IsFavorite);
+            var newFavoriteState = !secret.IsFavorite;
+            secret.IsFavorite = newFavoriteState;
+
+            var result = await _updateFavoriteUseCase.UpdateFavoriteAsync(secret.IdSecret, newFavoriteState);
 
             if (!result.IsSuccess)
             {
                 var errors = string.Join(";", result.Errors);
                 MessageBox.Show(errors);
 
-                secret.IsFavorite = !secret.IsFavorite;
+                secret.IsFavorite = !newFavoriteState;
                 return;
             }
 
             secret.DateUpdate = result.Value.ToLocalTime();
-
             OnPropertyChanged(nameof(SelectedSecretData));
         }
 
@@ -493,6 +511,16 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         #endregion
 
+        #region [SwitchTemplateSecretsCommand] - Переключение шаблона списка секретов
+
+        public RelayCommand<TemplateType>? SwitchTemplateSecretsCommand { get; private set; }
+
+        private void Execute_SwitchTemplateSecretsCommand(TemplateType type) => SelectedTemplate = type;
+
+        private bool CanExecute_SwitchTemplateSecretsCommand(TemplateType type) => type != SelectedTemplate;
+
+        #endregion
+
         /*--Управление EditMenu--*/
 
         #region [ShowEditMenuCommand] - Показать меню редактирование
@@ -509,6 +537,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                 SetNulEditFields();
             else
                 SelectedSecretData = secret;
+
         } 
 
         private bool CanExecute_ShowEditMenuCommand(EncryptedSecretViewModel secret) => true;

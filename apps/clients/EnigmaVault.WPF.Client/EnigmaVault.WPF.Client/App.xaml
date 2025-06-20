@@ -15,10 +15,12 @@
                 
                 <ResourceDictionary Source="Resources\Styles\BorderStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\ButtonStyle.xaml"/>
+                <ResourceDictionary Source="Resources\Styles\ContextMenuStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\GridSplitterStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\ScrollViewerStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\TextBlockStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\TextBoxStyle.xaml"/>
+                <ResourceDictionary Source="Resources\Styles\ToggleButtonStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

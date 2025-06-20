@@ -153,9 +153,10 @@
     <!--#region Базовая кнопка -->
 
     <Style x:Key="Button.App" TargetType="Button">
-        <Setter Property="Height" Value="30"/>
-        <Setter Property="Width" Value="30"/>
+        <!--<Setter Property="Height" Value="30"/>
+        <Setter Property="Width" Value="30"/>-->
         <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -216,6 +217,15 @@
             </EventTrigger>
         </Style.Triggers>
     </Style>
+
+    <Style x:Key="Button.App.VisibleWhenDisabled" TargetType="Button" BasedOn="{StaticResource Button.App}">
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Visibility" Value="Visible"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
 
     <!--#endregion-->
 
