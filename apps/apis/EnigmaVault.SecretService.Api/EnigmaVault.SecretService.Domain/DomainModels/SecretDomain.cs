@@ -11,6 +11,8 @@
 
         public int IdUser { get; private set; }
 
+        public int? IdFolder { get; private set; }
+
         public byte[] EncryptedData { get; private set; } = null!;
 
         public byte[] Nonce { get; private set; } = null!;
@@ -50,12 +52,13 @@
             };
         }
 
-        public static SecretDomain Reconstruct(int idSecret, int idUser, byte[] encryptedData, byte[] iv, string serviceName, string? url, string? notes, int schemaVersion, DateTime dateAdded, DateTime dateUpdate, bool IsFavorite)
+        public static SecretDomain Reconstruct(int idSecret, int idUser, int? idFolder, byte[] encryptedData, byte[] iv, string serviceName, string? url, string? notes, int schemaVersion, DateTime dateAdded, DateTime dateUpdate, bool IsFavorite)
         {
             return new SecretDomain
             {
                 IdSecret = idSecret,
                 IdUser = idUser,
+                IdFolder = idFolder,
                 EncryptedData = encryptedData,
                 Nonce = iv,
                 ServiceName = serviceName,

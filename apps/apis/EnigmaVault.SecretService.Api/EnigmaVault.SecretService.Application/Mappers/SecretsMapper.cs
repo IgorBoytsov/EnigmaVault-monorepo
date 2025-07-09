@@ -11,6 +11,7 @@ namespace EnigmaVault.SecretService.Application.Mappers
             {
                 IdSecret = domain.IdSecret,
                 IdUser = domain.IdUser,
+                IdFolder = domain.IdFolder,
                 EncryptedData = domain.EncryptedData,
                 Nonce = domain.Nonce,
                 DateAdded = domain.DateAdded,

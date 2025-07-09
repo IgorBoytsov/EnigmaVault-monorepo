@@ -224,6 +224,25 @@ namespace EnigmaVault.SecretService.Api.Controllers
             }
         }
 
+        [HttpPatch("{id}/folder")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateFolder([FromRoute] int id, [FromBody] UpdateSecretFolderRequest request)
+        {
+            var command = new UpdateSecretFolderCommand
+            {
+                IdSecret = id,
+                IdFolder = request.IdFolder,
+            };
+
+            var result = await _mediator.Send(command);
+
+            if (result.IsSuccess)
+                return Ok();
+            else
+                return NotFound(result.Errors);
+        }
+
         /*--Delete----------------------------------------------------------------------------------------*/
 
         [HttpDelete("{id}")] 

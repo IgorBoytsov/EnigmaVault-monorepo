@@ -26,4 +26,8 @@ public partial class Secret
     public DateTime DateUpdate { get; set; }
 
     public bool IsFavorite { get; set; }
+
+    public int? IdFolder { get; set; }
+
+    public virtual Folder? IdFolderNavigation { get; set; }
 }

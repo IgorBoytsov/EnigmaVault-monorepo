@@ -153,8 +153,6 @@
     <!--#region Базовая кнопка -->
 
     <Style x:Key="Button.App" TargetType="Button">
-        <!--<Setter Property="Height" Value="30"/>
-        <Setter Property="Width" Value="30"/>-->
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -170,13 +168,18 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="0">
 
-                        <ContentControl x:Name="contenButton" 
+                        <!--<ContentControl x:Name="contenButton" 
                                         HorizontalAlignment="Center" 
                                         VerticalAlignment="Center"
                                         FontSize="{TemplateBinding FontSize}"
                                         Foreground="{TemplateBinding Foreground}"
                                         Content="{TemplateBinding Content}" 
-                                        Margin="3"/>
+                                        Margin="3"/>-->
+                        
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"
+                                          Margin="3" />
+                        
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="true">
@@ -188,7 +191,7 @@
                             <Setter TargetName="buttonBorder" Property="Background" Value="{StaticResource Button.SideMenu.Background}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Visibility" Value="Hidden"/>
+                            <Setter Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="buttonBorder" Property="Background" Value="#676767"/>
                             <Setter TargetName="buttonBorder" Property="BorderBrush" Value="#3D3D3B"/>
                         </Trigger>
@@ -226,7 +229,59 @@
         </Style.Triggers>
     </Style>
 
-
     <!--#endregion-->
 
+    <!--#region [UserSecretsPage] Кнопки фильтрации на боковой понели -->
+    
+    <Style x:Key="Button.UseCeretPage.ShoAllSecret" TargetType="Button">
+        <!--<Setter Property="Background" Value="#2980B5"/>-->
+        <Setter Property="Background" Value="#7A7A7A"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="buttonBorder"
+                            Width="{TemplateBinding Width}"
+                            Height="{TemplateBinding Height}"
+                            Background="{TemplateBinding Background}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3">
+
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"
+                                          Margin="3" />
+
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <!--<Setter TargetName="buttonBorder" Property="Background" Value="#0E659A"/>-->
+                            <Setter TargetName="buttonBorder" Property="Background" Value="#565656"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="true">
+                            <!--<Setter TargetName="buttonBorder" Property="Background" Value="#0E659A"/>-->
+                            <Setter TargetName="buttonBorder" Property="Background" Value="#565656"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                            <!--<Setter TargetName="buttonBorder" Property="Background" Value="#005085"/>
+                            <Setter TargetName="buttonBorder" Property="BorderBrush" Value="#003E73"/>-->
+                            <Setter TargetName="buttonBorder" Property="Background" Value="#565656"/>
+                            <Setter TargetName="buttonBorder" Property="BorderBrush" Value="#2F2F2F"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Visibility" Value="Visible"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--#endregion-->
+    
 </ResourceDictionary>

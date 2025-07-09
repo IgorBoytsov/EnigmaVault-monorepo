@@ -3,6 +3,7 @@
     public class EncryptedSecret
     {
         public int IdSecret { get; set; }
+        public int? IdFolder { get; set; }
         public int IdUser { get; set; }
 
         public string ServiceName { get; set; }

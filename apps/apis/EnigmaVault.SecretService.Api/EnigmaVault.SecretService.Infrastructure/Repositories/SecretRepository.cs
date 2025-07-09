@@ -37,7 +37,7 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
             await _context.Secrets.AddAsync(entity);
             await _context.SaveChangesAsync();
             
-            var secretDomain = SecretDomain.Reconstruct(entity.IdSecret, entity.IdUser, entity.EncryptedData, entity.Nonce, entity.ServiceName, entity.Url, entity.Notes, entity.SchemaVersion, entity.DateAdded, entity.DateUpdate, entity.IsFavorite);
+            var secretDomain = SecretDomain.Reconstruct(entity.IdSecret, entity.IdUser, entity.IdFolder, entity.EncryptedData, entity.Nonce, entity.ServiceName, entity.Url, entity.Notes, entity.SchemaVersion, entity.DateAdded, entity.DateUpdate, entity.IsFavorite);
 
             return secretDomain;
         }
@@ -52,6 +52,7 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
                 .Select(s => new SecretDto
                 {
                     IdUser = s.IdUser,
+                    IdFolder = s.IdFolder,
                     IdSecret = s.IdSecret,
                     ServiceName = s.ServiceName,
                     Url = s.Url,
@@ -77,7 +78,7 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
             if (entity is null)
                 return null;
 
-            var secretDomain = SecretDomain.Reconstruct(entity.IdSecret, entity.IdUser, entity.EncryptedData, entity.Nonce, entity.ServiceName, entity.Url, entity.Notes, entity.SchemaVersion, entity.DateAdded, entity.DateUpdate, entity.IsFavorite);
+            var secretDomain = SecretDomain.Reconstruct(entity.IdSecret, entity.IdUser, entity.IdFolder, entity.EncryptedData, entity.Nonce, entity.ServiceName, entity.Url, entity.Notes, entity.SchemaVersion, entity.DateAdded, entity.DateUpdate, entity.IsFavorite);
 
             return secretDomain;
         }
@@ -127,11 +128,17 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
 
         public async Task<Result<DateTime>> UpdateNoteAsync(UpdateNoteCommand command)
             => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
-                predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
+                 predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
                  setPropertyCalls: us => us
                 .SetProperty(p => p.Notes, command.Note)
                 .SetProperty(p => p.DateUpdate, DateTime.UtcNow),
                 selector: secret => secret.DateUpdate);
+
+        public async Task<Result> UpdateFolderAsync(UpdateSecretFolderCommand command)
+            => await _entityUpdater.UpdatePropertyAsync<Secret>(
+                predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
+                setPropertyCalls: us => us
+                .SetProperty(p => p.IdFolder, command.IdFolder));
 
         /*--Delete----------------------------------------------------------------------------------------*/
 

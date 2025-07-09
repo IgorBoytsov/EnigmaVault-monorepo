@@ -64,7 +64,7 @@ namespace EnigmaVault.Infrastructure.Repositories
                     SecretResponse? secretResponse = await response.Content.ReadFromJsonAsync<SecretResponse>(_jsonSerializerOptions);
 
                     var secretDomain = SecretDomain.Reconstruct(
-                        secretResponse!.IdSecret,
+                        secretResponse!.IdSecret, secretResponse.IdFolder,
                         secretResponse.EncryptedData, secretResponse.Nonce,
                         secretResponse.ServiceName, secretResponse.Url, secretResponse.Notes, secretResponse.SchemaVersion,
                         secretResponse.DateAdded, secretResponse.DateUpdate, secretResponse.IsFavorite);
@@ -101,7 +101,7 @@ namespace EnigmaVault.Infrastructure.Repositories
                     }
 
                     List<SecretDomain> secrets = secretsResponse.Select(s => SecretDomain.Reconstruct(
-                        s.IdSecret, s.EncryptedData, s.Nonce, s.ServiceName, s.Url, s.Notes, s.SchemaVersion,
+                        s.IdSecret, s.IdFolder, s.EncryptedData, s.Nonce, s.ServiceName, s.Url, s.Notes, s.SchemaVersion,
                         s.DateAdded, s.DateUpdate, s.IsFavorite)).ToList();
 
                     _logger.LogInformation("Список из {Count} секретов успешно получен.", secrets.Count);
@@ -265,6 +265,31 @@ namespace EnigmaVault.Infrastructure.Repositories
                 }
 
             }, "обновление заметки");
+        }
+
+        public async Task<Result> UpdateFolderAsync(int idSecret, int? idFolder)
+        {
+            return await _apiRequestHandler.ExecuteApiCallAsync(async () =>
+            {
+                string endpoint = $"api/secrets/{idSecret}/folder";
+
+                var payload = new
+                {
+                    IdFolder = idFolder
+                };
+
+                HttpResponseMessage response = await _httpClient.PatchAsJsonAsync(endpoint, payload);
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    return Result.Success();
+                }
+                else
+                {
+                    return await _apiRequestHandler.HandleApiErrorAsync(response, "обновление папки, в которой лежит секрет");
+                }
+
+            }, "обновление папки, в которой лежит секрет");
         }
 
         /*--Delete----------------------------------------------------------------------------------------*/

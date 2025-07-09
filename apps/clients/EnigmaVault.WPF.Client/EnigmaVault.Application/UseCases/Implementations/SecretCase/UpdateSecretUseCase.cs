@@ -28,7 +28,7 @@ namespace EnigmaVault.Application.UseCases.Implementations.SecretCase
             var (EncryptedData, Nonce) = _secretsCryptoService.Encrypt(sensitiveDate);
 
             var secretDomain = SecretDomain.Reconstruct(
-                decryptedSecret.IdSecret,
+                decryptedSecret.IdSecret, decryptedSecret.IdFolder,
                 EncryptedData, Nonce,
                 decryptedSecret.ServiceName, decryptedSecret.Url, decryptedSecret.Notes, decryptedSecret.SchemaVersion,
                 decryptedSecret.DateAdded, decryptedSecret.DateUpdate, decryptedSecret.IsFavorite);

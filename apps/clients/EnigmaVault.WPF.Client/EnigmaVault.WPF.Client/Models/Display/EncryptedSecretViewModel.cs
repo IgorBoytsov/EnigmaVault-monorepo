@@ -14,6 +14,29 @@ namespace EnigmaVault.WPF.Client.Models.Display
         public int IdSecret => _model.IdSecret;
         public int SchemaVersion => _model.SchemaVersion;
 
+        public int? IdFolder
+        {
+            get => _model.IdFolder;
+            private set
+            {
+                if (_model.IdFolder != value)
+                {
+                    _model.IdFolder = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string? _folderName;
+        public string? FolderName
+        {
+            get => _folderName;
+            private set
+            {
+                SetProperty(ref _folderName, value);
+            }
+        }
+
         public string EncryptedData
         {
             get => _model.EncryptedData;
@@ -116,6 +139,34 @@ namespace EnigmaVault.WPF.Client.Models.Display
                     OnPropertyChanged();
                 }
             }
+        }
+
+        /// <summary>
+        /// Устанавливает значение ID папки в null. Что бы отвязать ее от каких либо папок.
+        /// </summary>
+        public void SetDefaultFolderIdInfo()
+        {
+            IdFolder = null;
+            FolderName = FolderViewModel.DISPLAYE_SECRETS_SYSTEM_FOLDER_NAME;
+        }
+
+        public void SetFolderName(string folderName)
+        {
+            if (string.IsNullOrWhiteSpace(folderName))
+                throw new ArgumentNullException($"Название папки не может быть пустым.");
+
+            FolderName = folderName;
+        }
+
+        /// <summary>
+        /// Устанавливает нужное ID папки, в которой лежит запись. Вызывать после добавление записи в конкретную папку.
+        /// </summary>
+        /// <param name="folderId"></param>
+        public void UpdateFolderID(int folderId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(folderId, $"Значение {nameof(folderId)} вышло за допустимые пределы. Значение {nameof(folderId)} не может быть меньше 0.");
+
+            IdFolder = folderId;
         }
 
         public EncryptedSecret GetUnderlyingModel() => _model;

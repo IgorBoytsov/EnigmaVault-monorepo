@@ -4,6 +4,8 @@
     {
         public int IdSecret { get; set; }
 
+        public int IdFolder { get; set; }
+
         public string Username { get; set; } = null!;
 
         public string Password { get; set; } = null!;

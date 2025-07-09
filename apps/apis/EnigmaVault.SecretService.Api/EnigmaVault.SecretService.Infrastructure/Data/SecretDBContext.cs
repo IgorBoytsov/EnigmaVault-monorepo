@@ -16,6 +16,8 @@ public partial class SecretDBContext : DbContext
     {
     }
 
+    public virtual DbSet<Folder> Folders { get; set; }
+
     public virtual DbSet<Secret> Secrets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -28,6 +30,17 @@ public partial class SecretDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Folder>(entity =>
+        {
+            entity.HasKey(e => e.IdFolder);
+
+            entity.Property(e => e.IdFolder).HasColumnName("id_folder");
+            entity.Property(e => e.FolderName)
+                .HasMaxLength(100)
+                .HasColumnName("folder_name");
+            entity.Property(e => e.IdUser).HasColumnName("id_user");
+        });
+
         modelBuilder.Entity<Secret>(entity =>
         {
             entity.HasKey(e => e.IdSecret);
@@ -40,6 +53,7 @@ public partial class SecretDBContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("date_update");
             entity.Property(e => e.EncryptedData).HasColumnName("encrypted_data");
+            entity.Property(e => e.IdFolder).HasColumnName("id_folder");
             entity.Property(e => e.IdUser).HasColumnName("id_user");
             entity.Property(e => e.IsFavorite).HasColumnName("isFavorite");
             entity.Property(e => e.Nonce)
@@ -51,6 +65,10 @@ public partial class SecretDBContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("service_name");
             entity.Property(e => e.Url).HasColumnName("url");
+
+            entity.HasOne(d => d.IdFolderNavigation).WithMany(p => p.Secrets)
+                .HasForeignKey(d => d.IdFolder)
+                .HasConstraintName("FK_Secrets_Folders");
         });
 
         OnModelCreatingPartial(modelBuilder);

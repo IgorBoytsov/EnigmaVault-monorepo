@@ -9,6 +9,8 @@
 
         public int IdSecret { get; private set; }
 
+        public int? IdFolder { get; private set; }
+
         public int IdUser { get; private set; }
 
         public string EncryptedData { get; private set; }
@@ -44,11 +46,12 @@
             };
         }
 
-        public static SecretDomain Reconstruct(int idSecret, string encryptedData, string nonce, string serviceName, string? url, string? notes, int schemaVersion, DateTime? dateAdded, DateTime? dateUpdate, bool isFavorite)
+        public static SecretDomain Reconstruct(int idSecret, int? idFolder, string encryptedData, string nonce, string serviceName, string? url, string? notes, int schemaVersion, DateTime? dateAdded, DateTime? dateUpdate, bool isFavorite)
         {
             return new SecretDomain()
             {
                 IdSecret = idSecret,
+                IdFolder = idFolder,
                 EncryptedData = encryptedData,
                 Nonce = nonce,
                 ServiceName = serviceName,

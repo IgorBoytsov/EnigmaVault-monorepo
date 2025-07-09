@@ -7,7 +7,9 @@
         <ResourceDictionary>
 
             <converters:RecordDateUpdateConverter x:Key="RecordDateUpdateConverter"/>
-
+            <converters:IdFolderToIsDeletableConverter  x:Key="IdFolderToIsDeletableConverter"/>
+            <converters:EqualityToBooleanConverter x:Key="EqualityConverter"/>
+            
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources\PathElements\Icons.xaml"/>
 

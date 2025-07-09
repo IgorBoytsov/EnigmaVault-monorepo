@@ -6,6 +6,8 @@
 
         public int IdUser { get; set; }
 
+        public int? IdFolder { get; set; }
+
         public byte[] EncryptedData { get; set; } = null!;
 
         public byte[] Nonce { get; set; } = null!;

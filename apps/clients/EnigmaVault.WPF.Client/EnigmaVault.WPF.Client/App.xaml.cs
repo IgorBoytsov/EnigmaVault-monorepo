@@ -3,10 +3,12 @@ using EnigmaVault.Application.AutoMappers.Profiles;
 using EnigmaVault.Application.Services.Abstractions;
 using EnigmaVault.Application.Services.Implementations;
 using EnigmaVault.Application.UseCases.Abstractions.CountryCase;
+using EnigmaVault.Application.UseCases.Abstractions.FolderCase;
 using EnigmaVault.Application.UseCases.Abstractions.GanderCase;
 using EnigmaVault.Application.UseCases.Abstractions.SecretCase;
 using EnigmaVault.Application.UseCases.Abstractions.UserCase;
 using EnigmaVault.Application.UseCases.Implementations.CountryCase;
+using EnigmaVault.Application.UseCases.Implementations.FolderCase;
 using EnigmaVault.Application.UseCases.Implementations.GenderCase;
 using EnigmaVault.Application.UseCases.Implementations.SecretCase;
 using EnigmaVault.Application.UseCases.Implementations.UserCase;
@@ -161,6 +163,12 @@ namespace EnigmaVault.WPF.Client
             services.AddScoped<IUpdateFavoriteUseCase, UpdateFavoriteUseCase>();
             services.AddScoped<IUpdateMetaDataUseCase, UpdateMetaDataUseCase>();
             services.AddScoped<IUpdateNoteUseCase, UpdateNoteUseCase>();
+            services.AddScoped<IUpdateFolderInSecretUseCase, UpdateFolderInSecretUseCase>();
+
+            services.AddScoped<ICreateFolderUseCase, CreateFolderUseCase>();
+            services.AddScoped<IGetAllFoldersUseCase, GetAllFoldersUseCase>();
+            services.AddScoped<IUpdateFolderNameUseCase, UpdateFolderNameUseCase>();
+            services.AddScoped<IDeleteFolderUseCase, DeleteFolderUseCase>();
         }
 
         private static void ConfigureHttpAndRepositories(ServiceCollection services)
@@ -175,6 +183,7 @@ namespace EnigmaVault.WPF.Client
             services.AddHttpClient<ICountryRepository, ApiCountryRepository>(authApi);
 
             services.AddHttpClient<ISecretRepository, ApiSecretRepository>(secretApi);
+            services.AddHttpClient<IFolderRepository, ApiFolderRepository>(secretApi);
         }
 
         private static void ConfigureAutoMapper(ServiceCollection services) => services.AddAutoMapper(typeof(UserProfile).Assembly);

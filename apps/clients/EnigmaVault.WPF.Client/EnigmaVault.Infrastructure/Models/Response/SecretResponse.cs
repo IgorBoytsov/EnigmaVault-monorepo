@@ -4,6 +4,8 @@
     {
         public int IdSecret { get; set; }
 
+        public int? IdFolder { get; set; }
+
         public int IdUser { get; set; }
 
         public string EncryptedData { get; set; } = null!;

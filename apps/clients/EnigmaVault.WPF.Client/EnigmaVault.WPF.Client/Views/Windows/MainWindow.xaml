@@ -11,7 +11,7 @@
         WindowStyle="ThreeDBorderWindow"
         WindowStartupLocation="CenterScreen"
         Height="480" Width="800"
-        MinHeight="700" MinWidth="1000"
+        MinHeight="700" MinWidth="1100"
         Title="MainWindow">
 
     <WindowChrome.WindowChrome>
