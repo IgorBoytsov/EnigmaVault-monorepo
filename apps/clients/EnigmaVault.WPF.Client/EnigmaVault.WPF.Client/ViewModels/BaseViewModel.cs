@@ -27,6 +27,13 @@ namespace EnigmaVault.WPF.Client.ViewModels
             set => SetProperty<bool>(ref _isBusy, value);
         }
 
+        private bool _isInitialize = false;
+        public bool IsInitialize
+        {
+            get => _isInitialize;
+            set => SetProperty<bool>(ref _isInitialize, value);
+        }
+
         private UserDto? _currentUser;
         public UserDto? CurrentUser
         {

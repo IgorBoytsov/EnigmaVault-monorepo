@@ -2,7 +2,7 @@
 
 namespace EnigmaVault.WPF.Client.Models.Display
 {
-    public class EncryptedSecretViewModel : ObservableObject
+    internal sealed class EncryptedSecretViewModel : ObservableObject
     {
         private readonly EncryptedSecret _model;
 
@@ -72,6 +72,7 @@ namespace EnigmaVault.WPF.Client.Models.Display
                 {
                     _model.ServiceName = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(ServiceNameFirstLetter));
                 }
             }
         }
@@ -83,7 +84,7 @@ namespace EnigmaVault.WPF.Client.Models.Display
             {
                 if (_model.Url != value)
                 {
-                    _model.Url = value;
+                    _model.Url = value!;
                     OnPropertyChanged();
                 }
             }
@@ -96,7 +97,7 @@ namespace EnigmaVault.WPF.Client.Models.Display
             {
                 if (_model.Notes != value)
                 {
-                    _model.Notes = value;
+                    _model.Notes = value!;
                     OnPropertyChanged();
                 }
             }
@@ -138,6 +139,17 @@ namespace EnigmaVault.WPF.Client.Models.Display
                     _model.IsFavorite = value;
                     OnPropertyChanged();
                 }
+            }
+        }
+
+        public string ServiceNameFirstLetter
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(ServiceName))
+                    return "#";
+
+                return ServiceName.Substring(0, 1).ToUpper();
             }
         }
 

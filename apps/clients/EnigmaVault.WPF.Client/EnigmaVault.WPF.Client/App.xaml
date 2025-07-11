@@ -17,6 +17,7 @@
                 
                 <ResourceDictionary Source="Resources\Styles\BorderStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\ButtonStyle.xaml"/>
+                <ResourceDictionary Source="Resources\Styles\ComboBoxStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\ContextMenuStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\GridSplitterStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\ScrollViewerStyle.xaml"/>

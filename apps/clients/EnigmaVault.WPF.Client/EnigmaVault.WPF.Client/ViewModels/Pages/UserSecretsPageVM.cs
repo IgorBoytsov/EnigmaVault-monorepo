@@ -12,7 +12,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
 
 namespace EnigmaVault.WPF.Client.ViewModels.Pages
@@ -73,25 +72,34 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             _deleteFolderUseCase = deleteFolderUseCase;
 
             SecretsView = CollectionViewSource.GetDefaultView(_secrets);
+            SecretsView.Filter = FilterSecrets;
 
             SetVisibilityEditMenu(Visibility.Collapsed, 0);
 
             SetValueCommands();
         }
 
-        public void Update<TData>(TData value, TransmittingParameter parameter = TransmittingParameter.None)
+        void IUpdatable.Update<TData>(TData value, TransmittingParameter parameter)
         {
             
         }
 
-        public async Task InitializeAsync()
+        async Task IAsyncInitializable.InitializeAsync()
         {
+            if (IsInitialize)
+                return;
+
             IsBusy = true;
 
             try
             {
                 await GetSecrets();
                 await GetFolders();
+
+                SelectedGrouping = Grouping[0];
+                SelectedSorting = Sorting[0];
+
+                IsInitialize = true;
             }
             catch (Exception ex)
             {
@@ -110,6 +118,20 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         private Dictionary<int, string> FolderLookup = [];
         public ObservableCollection<FolderViewModel> Folders { get; private set; } = [];
+
+        public ObservableCollection<KeyValuePair<ViewGrouping, string>> Grouping { get; private set; } = new()
+        {
+            new KeyValuePair<ViewGrouping, string>(ViewGrouping.None, "Не применять"),
+            new KeyValuePair<ViewGrouping, string>(ViewGrouping.Name, "Названию"),
+            new KeyValuePair<ViewGrouping, string>(ViewGrouping.Alphabet, "Алфавиту"),
+            new KeyValuePair<ViewGrouping, string>(ViewGrouping.Folder, "Папкам"),
+        };
+        
+        public ObservableCollection<KeyValuePair<ViewSorting, string>> Sorting { get; private set; } = new()
+        {
+            new KeyValuePair<ViewSorting, string>(ViewSorting.Ascending, "По возрастанию (от А до Я, от 0 до 9)"),
+            new KeyValuePair<ViewSorting, string>(ViewSorting.Descending, "По убыванию (от Я до А, от 9 до 0)"),
+        };
 
         /*--Свойства--------------------------------------------------------------------------------------*/
 
@@ -141,13 +163,15 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             get => _selectedFolder;
             set
             {
-                SetProperty(ref _selectedFolder, value);
-                FolderName = value?.FolderName;
+                if (SetProperty(ref _selectedFolder, value))
+                {
+                    FolderName = value?.FolderName;
 
-                SecretsView.Filter = FilterSecretsByFolder;
-                SecretsView.Refresh();
+                    if (value != null)
+                        ViewFilterType = ViewFilterType.Folders;
 
-                ViewFilterType = ViewFilterType.Folders;
+                    SecretsView.Refresh();
+                }
             }
         } 
         
@@ -158,6 +182,28 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             set
             {
                 SetProperty(ref _selectedFolderInContextMenu, value);
+            }
+        }
+
+        private KeyValuePair<ViewGrouping, string> _selectedGrouping;
+        public KeyValuePair<ViewGrouping, string> SelectedGrouping
+        {
+            get => _selectedGrouping;
+            set
+            {
+                SetProperty(ref _selectedGrouping, value);
+                UpdateSecretsView(value.Key, SelectedSorting.Key);
+            }
+        }
+        
+        private KeyValuePair<ViewSorting, string> _selectedSorting;
+        public KeyValuePair<ViewSorting, string> SelectedSorting
+        {
+            get => _selectedSorting;
+            set
+            {
+                SetProperty(ref _selectedSorting, value);
+                UpdateSecretsView(SelectedGrouping.Key, value.Key);
             }
         }
 
@@ -626,7 +672,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         /*--Update--*/
 
-        #region [UpdateSecretCommand] - Обновление чувствительных данных
+        #region [UpdateSecretCommand] - Обновление всех данных
 
         public RelayCommandAsync<EncryptedSecretViewModel>? UpdateSecretCommand { get; private set; }
 
@@ -670,6 +716,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             SelectedSecretData = secret;
 
             OnPropertyChanged(nameof(SelectedSecretData));
+
+            SecretsView.Refresh();
         }
 
         private bool CanExecute_UpdateSecretCommand(EncryptedSecretViewModel secret) => secret != null;
@@ -730,6 +778,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             secret.DateUpdate = result.Value.ToLocalTime();
 
             OnPropertyChanged(nameof(SelectedSecretData));
+
+            SecretsView.Refresh();
         }
 
         private bool CanExecute_UpdateMetadataCommand(EncryptedSecretViewModel secret)
@@ -916,6 +966,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
         {
             SelectedFolder = null;
             ViewFilterType = ViewFilterType.All;
+            SecretsView.Refresh();
         }
 
         private bool CanExecute_ShowAllSecretsCommand() => ViewFilterType != ViewFilterType.All;
@@ -928,14 +979,9 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         private void Execute_ShowFavoriteSecretsCommand()
         {
-            _displayIsFavoriteSecrets = true;
-
-            SecretsView.Filter = FilterSecretsByFavorite;
-            SecretsView.Refresh();
-
-            _displayIsFavoriteSecrets = false;
-
             ViewFilterType = ViewFilterType.Favorite;
+
+            SecretsView.Refresh();
         }
 
         private bool CanExecute_ShowFavoriteSecretsCommand() => ViewFilterType != ViewFilterType.Favorite;
@@ -943,6 +989,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
         #endregion
 
         /*--Методы----------------------------------------------------------------------------------------*/
+
+        /*--Получение данных--*/
 
         #region Secrets
 
@@ -1016,32 +1064,72 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         #endregion
 
-        #region Фильтрация CollectionView [SecretsView]
+        /*--Фильтрация, Группировка, Сортировка CollectionView--*/
 
-        private bool FilterSecretsByFolder(object item)
+        #region SecretsView
+
+        private bool FilterSecrets(object item)
         {
-            if (SelectedFolder == null)
-                return true;
+            if (item is not EncryptedSecretViewModel record)
+                return false;
 
-            if (item is EncryptedSecretViewModel record)
-                return record.IdFolder == SelectedFolder.IdFolder;
-
-            return false;
+            return ViewFilterType switch
+            {
+                ViewFilterType.All => true,
+                ViewFilterType.Favorite => record.IsFavorite,
+                ViewFilterType.Folders => SelectedFolder != null && record.IdFolder == SelectedFolder.IdFolder,
+                _ => true,
+            };
         }
 
-        private bool _displayIsFavoriteSecrets = false;
-        private bool FilterSecretsByFavorite(object item)
+        private void UpdateSecretsView(ViewGrouping grouping, ViewSorting sorting)
         {
-            if (_displayIsFavoriteSecrets == false)
-                return true;
+            SecretsView.GroupDescriptions.Clear();
+            SecretsView.SortDescriptions.Clear();
+            ListCollectionView? lcv = null;
 
-            if (item is EncryptedSecretViewModel record)
-                return record.IsFavorite == true;
+            if (SecretsView is ListCollectionView listCollectionView)
+            {
+                lcv = listCollectionView;
+                lcv.CustomSort = null;
+            }
 
-            return false;
+            var direction = sorting == ViewSorting.Ascending
+                ? ListSortDirection.Ascending
+                : ListSortDirection.Descending;
+
+            Action? setupAction = grouping switch
+            {
+                ViewGrouping.None => () => SecretsView.SortDescriptions.Add(new SortDescription("ServiceName", direction)),
+                ViewGrouping.Folder => () =>
+                {
+                    SecretsView.GroupDescriptions.Add(new PropertyGroupDescription("FolderName"));
+
+                    SecretsView.SortDescriptions.Add(new SortDescription("FolderName", direction));
+                    SecretsView.SortDescriptions.Add(new SortDescription("ServiceName", direction));
+                }
+                ,
+                ViewGrouping.Alphabet => () =>
+                {
+                    SecretsView.GroupDescriptions.Add(new PropertyGroupDescription("ServiceNameFirstLetter"));
+                    SecretsView.SortDescriptions.Add(new SortDescription("ServiceName", direction));
+                }
+                ,
+                ViewGrouping.Name => () =>
+                {
+                    SecretsView.GroupDescriptions.Add(new PropertyGroupDescription("ServiceName"));
+                    SecretsView.SortDescriptions.Add(new SortDescription("ServiceName", direction));
+                }
+                ,
+                _ => null
+            };
+
+            setupAction?.Invoke();
         }
 
         #endregion
+
+        /*--Вспомогательные--*/
 
         #region Подсчет кол-ва элементов
 
@@ -1106,6 +1194,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
         }
 
         #endregion
+
+        /*--UI--*/
 
         #region Сброс полей для добавление\редактирование данных
 
