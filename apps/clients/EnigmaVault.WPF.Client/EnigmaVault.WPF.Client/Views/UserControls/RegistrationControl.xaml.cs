@@ -137,7 +137,7 @@ namespace EnigmaVault.WPF.Client.Views.UserControls
                 nameof(SelectedGender),
                 typeof(GenderDto),
                 typeof(RegistrationControl),
-                new FrameworkPropertyMetadata(new GenderDto(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+                new FrameworkPropertyMetadata(GenderDto.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         public GenderDto SelectedGender
         {
@@ -171,7 +171,7 @@ namespace EnigmaVault.WPF.Client.Views.UserControls
                 nameof(SelectedCountry),
                 typeof(CountryDto),
                 typeof(RegistrationControl),
-                new FrameworkPropertyMetadata(new CountryDto(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+                new FrameworkPropertyMetadata(CountryDto.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         public CountryDto SelectedCountry
         {

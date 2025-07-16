@@ -1,9 +1,7 @@
 ﻿namespace EnigmaVault.Application.Dtos
 {
-    public class CountryDto
+    public sealed record CountryDto(int IdCountry, string CountryName)
     {
-        public int IdCountry { get; set; }
-
-        public string CountryName { get; set; } = null!;
+        public static readonly CountryDto Empty = new(0, string.Empty);
     }
 }

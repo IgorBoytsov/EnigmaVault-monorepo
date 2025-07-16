@@ -1,9 +1,7 @@
 ﻿namespace EnigmaVault.Application.Dtos
 {
-    public class GenderDto
+    public sealed record GenderDto(int IdGender, string GenderName)
     {
-        public int IdGender { get; set; }
-
-        public string GenderName { get; set; } = null!;
+        public static readonly GenderDto Empty = new GenderDto(0, string.Empty);
     }
 }

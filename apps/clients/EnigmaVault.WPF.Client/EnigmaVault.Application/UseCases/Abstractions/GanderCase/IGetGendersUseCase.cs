@@ -5,6 +5,6 @@ namespace EnigmaVault.Application.UseCases.Abstractions.GanderCase
 {
     public interface IGetGendersUseCase
     {
-        Task<Result<List<GenderDto>?>> GetGendersAsync();
+        Task<Result<List<GenderDto>>> GetGendersAsync();
     }
 }

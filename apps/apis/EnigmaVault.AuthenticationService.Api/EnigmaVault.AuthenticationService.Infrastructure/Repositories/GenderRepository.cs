@@ -1,5 +1,5 @@
 ﻿using EnigmaVault.AuthenticationService.Application.Abstractions.Repositories;
-using EnigmaVault.AuthenticationService.Domain.DomainModels;
+using EnigmaVault.AuthenticationService.Application.DTOs;
 using EnigmaVault.AuthenticationService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
@@ -12,16 +12,14 @@ namespace EnigmaVault.AuthenticationService.Infrastructure.Repositories
 
         /*--Get-------------------------------------------------------------------------------------------*/
 
-        public async IAsyncEnumerable<GenderDomain?> GetAllStreamingAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<GenderDto> GetAllStreamingAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var entitiesStream = _context.Genders.AsNoTracking().AsAsyncEnumerable().WithCancellation(cancellationToken);
 
             await foreach (var genderEntity in entitiesStream)
             {
-                var domain = GenderDomain.Reconstitute(genderEntity.IdGender, genderEntity.GenderName);
-
-                if (domain != null)
-                    yield return domain;
+                var gender = new GenderDto(genderEntity.IdGender, genderEntity.GenderName);
+                yield return gender;
             }
         }
     }

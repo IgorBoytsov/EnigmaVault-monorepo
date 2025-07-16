@@ -1,10 +1,10 @@
-﻿using EnigmaVault.AuthenticationService.Domain.DomainModels;
+﻿using EnigmaVault.AuthenticationService.Application.DTOs;
 using System.Runtime.CompilerServices;
 
 namespace EnigmaVault.AuthenticationService.Application.Abstractions.Repositories
 {
     public interface IGenderRepository
     {
-        IAsyncEnumerable<GenderDomain?> GetAllStreamingAsync([EnumeratorCancellation] CancellationToken cancellationToken = default);
+        IAsyncEnumerable<GenderDto> GetAllStreamingAsync([EnumeratorCancellation] CancellationToken cancellationToken = default);
     }
 }

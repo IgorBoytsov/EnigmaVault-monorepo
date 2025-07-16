@@ -18,6 +18,6 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
         /*--Получение списка гендеров---------------------------------------------------------------------*/
 
         [HttpGet("get-all-stream")]
-        public IAsyncEnumerable<GenderDto?> GetCountriesStream(CancellationToken cancellationToken) => _getAllGenderStreamingUseCase.GetAllStreamingAsync(cancellationToken);
+        public IAsyncEnumerable<GenderDto> GetCountriesStream(CancellationToken cancellationToken) => _getAllGenderStreamingUseCase.GetAllStreamingAsync(cancellationToken);
     }
 }

@@ -5,6 +5,6 @@ namespace EnigmaVault.Application.UseCases.Abstractions.CountryCase
 {
     public interface IGetCountriesUseCase
     {
-        Task<Result<List<CountryDto>?>> GetCountriesAsync();
+        Task<Result<List<CountryDto>>> GetCountriesAsync();
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace EnigmaVault.Application.Dtos
 {
-    public record IconCategoryDto(int IdCategory, string Name)
+    public sealed record IconCategoryDto(int IdCategory, string Name)
     {
     }
 }

@@ -18,6 +18,6 @@ namespace EnigmaVault.AuthenticationService.Api.Controllers
         /*--Получение списка стран------------------------------------------------------------------------*/
 
         [HttpGet("get-all-stream")]
-        public IAsyncEnumerable<CountryDto?> GetCountriesStream(CancellationToken cancellationToken) => _getAllCountryStreamingUseCase.GetAllStreamingAsync(cancellationToken);
+        public IAsyncEnumerable<CountryDto> GetCountriesStream(CancellationToken cancellationToken) => _getAllCountryStreamingUseCase.GetAllStreamingAsync(cancellationToken);
     }
 }

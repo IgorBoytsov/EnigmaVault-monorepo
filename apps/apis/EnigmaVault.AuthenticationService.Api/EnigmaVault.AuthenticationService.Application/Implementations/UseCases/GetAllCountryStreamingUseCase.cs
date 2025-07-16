@@ -15,12 +15,12 @@ namespace EnigmaVault.AuthenticationService.Application.Implementations.UseCases
             _countryRepository = countryRepository;
         }
 
-        public async IAsyncEnumerable<CountryDto?> GetAllStreamingAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<CountryDto> GetAllStreamingAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var countriesStream = _countryRepository.GetAllStreamingAsync(cancellationToken);
 
-            await foreach (var countryDomain in countriesStream.WithCancellation(cancellationToken))
-                yield return countryDomain!.ToDto();
+            await foreach (var country in countriesStream.WithCancellation(cancellationToken))
+                yield return country;
         }
     }
 }
