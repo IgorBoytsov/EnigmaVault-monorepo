@@ -11,6 +11,8 @@ namespace EnigmaVault.SecretService.Infrastructure.Ioc
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
         {
             services.AddScoped<ISecretRepository, SecretRepository>();
+            services.AddScoped<IIconRepository, IconRepository>();
+            services.AddScoped<IIconCategoryRepository, IconCategoryRepository>();
             services.AddScoped<IFolderRepository, FolderRepository>();
             services.AddScoped<IEntityUpdater, EntityUpdater>(); 
 

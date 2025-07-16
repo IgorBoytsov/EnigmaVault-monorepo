@@ -19,6 +19,7 @@ namespace EnigmaVault.SecretService.Application.Mappers
                 IsFavorite = domain.IsFavorite,
                 Url = domain.Url,
                 Notes = domain.Notes,
+                SvgIcon = domain.SvgIcon,
                 SchemaVersion = domain.SchemaVersion,
                 ServiceName = domain.ServiceName,
             };

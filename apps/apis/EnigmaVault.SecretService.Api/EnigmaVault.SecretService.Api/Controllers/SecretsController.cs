@@ -1,4 +1,4 @@
-﻿using EnigmaVault.SecretService.Api.Dtos.Requests;
+﻿using EnigmaVault.SecretService.Api.Dtos.Requests.Secrets;
 using EnigmaVault.SecretService.Api.Dtos.Responses;
 using EnigmaVault.SecretService.Application.Features.Secrets;
 using EnigmaVault.SecretService.Application.Features.Secrets.Create;
@@ -206,6 +206,30 @@ namespace EnigmaVault.SecretService.Api.Controllers
                 IdSecret = id,
                 Note = request.Note,
             };
+
+            var result = await _mediator.Send(command);
+
+            if (result.IsSuccess)
+            {
+                var response = new UpdateSecretResponse
+                {
+                    DateUpdate = result.Value
+                };
+
+                return Ok(response);
+            }
+            else
+            {
+                return NotFound(result.Errors);
+            }
+        }
+
+        [HttpPatch("{id}/icon")]
+        [ProducesResponseType(typeof(UpdateSecretResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateSvgIcon([FromRoute] int id, [FromBody] UpdateSvgIconInSecretRequest request)
+        {
+            var command = new UpdateSvgIconCommand(id, request.SvgIcon);
 
             var result = await _mediator.Send(command);
 

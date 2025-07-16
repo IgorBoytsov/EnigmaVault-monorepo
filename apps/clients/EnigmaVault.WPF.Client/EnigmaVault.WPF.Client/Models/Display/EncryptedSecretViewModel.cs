@@ -1,4 +1,5 @@
 ﻿using EnigmaVault.Application.Dtos.Secrets.CryptoService;
+using System.Windows.Media;
 
 namespace EnigmaVault.WPF.Client.Models.Display
 {
@@ -13,6 +14,7 @@ namespace EnigmaVault.WPF.Client.Models.Display
 
         public int IdSecret => _model.IdSecret;
         public int SchemaVersion => _model.SchemaVersion;
+        public string? SvgCode => _model.SvgIcon;
 
         public int? IdFolder
         {
@@ -103,6 +105,16 @@ namespace EnigmaVault.WPF.Client.Models.Display
             }
         }
 
+        private ImageSource? _svgIcon;
+        public ImageSource? SvgIcon
+        {
+            get => _svgIcon;
+            private set
+            {
+                SetProperty(ref _svgIcon, value);
+            }
+        }
+
         public DateTime? DateAdded
         {
             get => _model.DateAdded!.Value.ToLocalTime();
@@ -180,6 +192,14 @@ namespace EnigmaVault.WPF.Client.Models.Display
 
             IdFolder = folderId;
         }
+
+        public void SetIcon(ImageSource svgIcon, string rawSvg)
+        {
+            SvgIcon = svgIcon;
+            SetSvgCodeUnderlineModel(rawSvg);
+        }
+
+        private void SetSvgCodeUnderlineModel(string rawSvg) => _model.SvgIcon = rawSvg;
 
         public EncryptedSecret GetUnderlyingModel() => _model;
     }

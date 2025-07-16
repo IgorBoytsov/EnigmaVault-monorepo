@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace EnigmaVault.SecretService.Api.Dtos.Requests
+namespace EnigmaVault.SecretService.Api.Dtos.Requests.Secrets
 {
     public class UpdateMetadataRequest
     {

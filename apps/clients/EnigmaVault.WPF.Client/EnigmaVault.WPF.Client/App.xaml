@@ -21,6 +21,7 @@
                 <ResourceDictionary Source="Resources\Styles\ContextMenuStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\GridSplitterStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\ScrollViewerStyle.xaml"/>
+                <ResourceDictionary Source="Resources\Styles\TabControlStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\TextBlockStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\TextBoxStyle.xaml"/>
                 <ResourceDictionary Source="Resources\Styles\ToggleButtonStyle.xaml"/>

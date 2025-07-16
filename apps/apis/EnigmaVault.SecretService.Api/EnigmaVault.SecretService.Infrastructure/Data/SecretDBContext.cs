@@ -18,6 +18,10 @@ public partial class SecretDBContext : DbContext
 
     public virtual DbSet<Folder> Folders { get; set; }
 
+    public virtual DbSet<Icon> Icons { get; set; }
+
+    public virtual DbSet<IconCategory> IconCategories { get; set; }
+
     public virtual DbSet<Secret> Secrets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -39,6 +43,36 @@ public partial class SecretDBContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("folder_name");
             entity.Property(e => e.IdUser).HasColumnName("id_user");
+        });
+
+        modelBuilder.Entity<Icon>(entity =>
+        {
+            entity.HasKey(e => e.IdIcon);
+
+            entity.Property(e => e.IdIcon).HasColumnName("id_icon");
+            entity.Property(e => e.IconName)
+                .HasMaxLength(100)
+                .HasColumnName("icon_name");
+            entity.Property(e => e.IdIconCategory).HasColumnName("id_icon_category");
+            entity.Property(e => e.IdUser).HasColumnName("id_user");
+            entity.Property(e => e.SvgCode).HasColumnName("svg_code");
+
+            entity.HasOne(d => d.IdIconCategoryNavigation).WithMany(p => p.Icons)
+                .HasForeignKey(d => d.IdIconCategory)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Icons_Icon_category");
+        });
+
+        modelBuilder.Entity<IconCategory>(entity =>
+        {
+            entity.HasKey(e => e.IdCategory);
+
+            entity.ToTable("Icon_category");
+
+            entity.Property(e => e.IdCategory).HasColumnName("id_category");
+            entity.Property(e => e.Name)
+                .HasMaxLength(150)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Secret>(entity =>
@@ -64,6 +98,7 @@ public partial class SecretDBContext : DbContext
             entity.Property(e => e.ServiceName)
                 .HasMaxLength(255)
                 .HasColumnName("service_name");
+            entity.Property(e => e.SvgIcon).HasColumnName("svg_icon");
             entity.Property(e => e.Url).HasColumnName("url");
 
             entity.HasOne(d => d.IdFolderNavigation).WithMany(p => p.Secrets)

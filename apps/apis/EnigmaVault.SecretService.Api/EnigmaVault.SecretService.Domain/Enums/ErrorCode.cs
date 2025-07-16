@@ -7,7 +7,10 @@
         Empty,
         NotFound,
 
+        CreateError,
         SaveError,
+        UpdateError,
         DeleteError,
+        CannotBeUpdated,
     }
 }

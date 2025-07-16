@@ -19,6 +19,8 @@ public partial class Secret
 
     public string? Notes { get; set; }
 
+    public string? SvgIcon { get; set; }
+
     public int SchemaVersion { get; set; }
 
     public DateTime DateAdded { get; set; }

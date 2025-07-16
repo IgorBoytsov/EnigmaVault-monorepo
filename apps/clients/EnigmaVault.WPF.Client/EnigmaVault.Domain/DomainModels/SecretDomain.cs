@@ -23,6 +23,8 @@
 
         public string? Notes { get; private set; }
 
+        public string SvgIcon { get; private set; }
+
         public int SchemaVersion { get; private set; }
 
         public DateTime? DateAdded { get; set; }
@@ -31,7 +33,7 @@
 
         public bool IsFavorite { get; private set; }
 
-        public static SecretDomain Create(int idUser, string encryptedData, string nonce, string serviceName, string? url, string? notes, int schemaVersion, bool isFavorite)
+        public static SecretDomain Create(int idUser, string encryptedData, string nonce, string serviceName, string? url, string? notes, string svgIcon, int schemaVersion, bool isFavorite)
         {
             return new SecretDomain()
             {
@@ -41,12 +43,13 @@
                 ServiceName = serviceName,
                 Url = url,
                 Notes = notes,
+                SvgIcon = svgIcon,
                 SchemaVersion = schemaVersion,
                 IsFavorite = isFavorite
             };
         }
 
-        public static SecretDomain Reconstruct(int idSecret, int? idFolder, string encryptedData, string nonce, string serviceName, string? url, string? notes, int schemaVersion, DateTime? dateAdded, DateTime? dateUpdate, bool isFavorite)
+        public static SecretDomain Reconstruct(int idSecret, int? idFolder, string encryptedData, string nonce, string serviceName, string? url, string? notes, string svgIcon, int schemaVersion, DateTime? dateAdded, DateTime? dateUpdate, bool isFavorite)
         {
             return new SecretDomain()
             {
@@ -57,6 +60,7 @@
                 ServiceName = serviceName,
                 Url = url,
                 Notes = notes,
+                SvgIcon= svgIcon,
                 SchemaVersion = schemaVersion,
                 DateAdded = dateAdded,
                 DateUpdate = dateUpdate,

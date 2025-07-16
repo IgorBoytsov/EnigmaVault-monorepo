@@ -15,6 +15,7 @@ namespace EnigmaVault.SecretService.Application.Abstractions.Repositories
         Task<Result<DateTime>> UpdateMetadataAsync(UpdateMetadataCommand command);
         Task<Result<DateTime>> UpdateEncryptedDataAsync(UpdateEncryptedDataCommand command);
         Task<Result<DateTime>> UpdateFavoriteAsync(UpdateFavoriteCommand command);
+        Task<Result<DateTime>> UpdateSvgIconAsync(UpdateSvgIconCommand command);
         Task<Result<DateTime>> UpdateNoteAsync(UpdateNoteCommand command);
         Task<Result> UpdateFolderAsync(UpdateSecretFolderCommand command);
         Task<bool> DeleteAsync(int id);

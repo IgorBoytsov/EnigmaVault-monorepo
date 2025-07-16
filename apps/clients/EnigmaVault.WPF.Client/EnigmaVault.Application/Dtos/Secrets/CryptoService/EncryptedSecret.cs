@@ -16,5 +16,6 @@
 
         public string EncryptedData { get; set; }
         public string Nonce { get; set; }
+        public string SvgIcon { get; set; }
     }
 }

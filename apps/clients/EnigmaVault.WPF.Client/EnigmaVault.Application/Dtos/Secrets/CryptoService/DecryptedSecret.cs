@@ -20,6 +20,8 @@
 
         public string? Url { get; set; }
 
+        public string SvgIcon { get; set; }
+
         public string? Notes { get; set; }
 
         public int SchemaVersion { get; set; }

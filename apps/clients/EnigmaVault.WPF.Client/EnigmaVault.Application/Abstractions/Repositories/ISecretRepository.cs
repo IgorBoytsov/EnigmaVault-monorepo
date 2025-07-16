@@ -14,6 +14,7 @@ namespace EnigmaVault.Application.Abstractions.Repositories
         Task<Result<DateTime>> UpdateEncryptedDataAsync(int idSecret, string encryptedData, string nonce);
         Task<Result<DateTime>> UpdateFavoriteAsync(int idSecret, bool isFavorite);
         Task<Result<DateTime>> UpdateNoteAsync(int idSecret, string? note);
+        Task<Result> UpdateIconAsync(int idSecret, string svgCode);
         Task<Result> UpdateFolderAsync(int idSecret, int? idFolder);
     }
 }

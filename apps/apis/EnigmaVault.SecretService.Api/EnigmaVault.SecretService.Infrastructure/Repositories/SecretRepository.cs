@@ -37,7 +37,7 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
             await _context.Secrets.AddAsync(entity);
             await _context.SaveChangesAsync();
             
-            var secretDomain = SecretDomain.Reconstruct(entity.IdSecret, entity.IdUser, entity.IdFolder, entity.EncryptedData, entity.Nonce, entity.ServiceName, entity.Url, entity.Notes, entity.SchemaVersion, entity.DateAdded, entity.DateUpdate, entity.IsFavorite);
+            var secretDomain = SecretDomain.Reconstruct(entity.IdSecret, entity.IdUser, entity.IdFolder, entity.EncryptedData, entity.Nonce, entity.ServiceName, entity.Url, entity.Notes, entity.SvgIcon, entity.SchemaVersion, entity.DateAdded, entity.DateUpdate, entity.IsFavorite);
 
             return secretDomain;
         }
@@ -62,6 +62,7 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
                     EncryptedData = s.EncryptedData,
                     Nonce = s.Nonce,
                     Notes = s.Notes,
+                    SvgIcon = s.SvgIcon,
                     SchemaVersion = s.SchemaVersion,
                 })
                 .AsAsyncEnumerable()
@@ -78,7 +79,7 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
             if (entity is null)
                 return null;
 
-            var secretDomain = SecretDomain.Reconstruct(entity.IdSecret, entity.IdUser, entity.IdFolder, entity.EncryptedData, entity.Nonce, entity.ServiceName, entity.Url, entity.Notes, entity.SchemaVersion, entity.DateAdded, entity.DateUpdate, entity.IsFavorite);
+            var secretDomain = SecretDomain.Reconstruct(entity.IdSecret, entity.IdUser, entity.IdFolder, entity.EncryptedData, entity.Nonce, entity.ServiceName, entity.Url, entity.Notes, entity.SvgIcon, entity.SchemaVersion, entity.DateAdded, entity.DateUpdate, entity.IsFavorite);
 
             return secretDomain;
         }
@@ -131,6 +132,14 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
                  predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
                  setPropertyCalls: us => us
                 .SetProperty(p => p.Notes, command.Note)
+                .SetProperty(p => p.DateUpdate, DateTime.UtcNow),
+                selector: secret => secret.DateUpdate);
+
+        public async Task<Result<DateTime>> UpdateSvgIconAsync(UpdateSvgIconCommand command)
+            => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
+                 predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
+                 setPropertyCalls: us => us
+                .SetProperty(p => p.SvgIcon, command.SvgIcon)
                 .SetProperty(p => p.DateUpdate, DateTime.UtcNow),
                 selector: secret => secret.DateUpdate);
 

@@ -30,7 +30,7 @@ namespace EnigmaVault.Application.UseCases.Implementations.SecretCase
             var secretDomain = SecretDomain.Reconstruct(
                 decryptedSecret.IdSecret, decryptedSecret.IdFolder,
                 EncryptedData, Nonce,
-                decryptedSecret.ServiceName, decryptedSecret.Url, decryptedSecret.Notes, decryptedSecret.SchemaVersion,
+                decryptedSecret.ServiceName, decryptedSecret.Url, decryptedSecret.Notes, decryptedSecret.SvgIcon, decryptedSecret.SchemaVersion,
                 decryptedSecret.DateAdded, decryptedSecret.DateUpdate, decryptedSecret.IsFavorite);
 
             var resultUpdated = await _secretRepository.UpdateAsync(secretDomain);

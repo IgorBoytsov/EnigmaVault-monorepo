@@ -48,6 +48,7 @@ namespace EnigmaVault.Application.Services.Implementations
                 ServiceName = metadata.ServiceName,
                 Url = metadata.Url!,
                 Notes = metadata.Notes!,
+                SvgIcon = metadata.SvgIcon,
                 IsFavorite = metadata.IsFavorite,
 
                 SchemaVersion = SchemaVersions.CURENT_SCHEMA_VERSION,
@@ -119,7 +120,7 @@ namespace EnigmaVault.Application.Services.Implementations
 
             string decryptedJson = Encoding.UTF8.GetString(decryptedBytes);
 
-            _logger.LogInformation("СТРОКА С ДАННЫМИ {@decryptedJson}", decryptedJson);
+            _logger.LogInformation("Строка с данными успешно получена.");
 
             Func<SensitiveSecretData> func = encryptedData.SchemaVersion switch
             {

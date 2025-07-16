@@ -1,18 +1,26 @@
-﻿using EnigmaVault.Application.Dtos.Secrets.CryptoService;
+﻿using EnigmaVault.Application.Dtos;
+using EnigmaVault.Application.Dtos.Secrets.CryptoService;
 using EnigmaVault.Application.Dtos.Secrets.Folders;
 using EnigmaVault.Application.Services.Abstractions;
 using EnigmaVault.Application.UseCases.Abstractions.FolderCase;
+using EnigmaVault.Application.UseCases.Abstractions.IconCase;
+using EnigmaVault.Application.UseCases.Abstractions.IconCategory;
 using EnigmaVault.Application.UseCases.Abstractions.SecretCase;
 using EnigmaVault.WPF.Client.Command;
+using EnigmaVault.WPF.Client.Constants;
 using EnigmaVault.WPF.Client.Enums;
 using EnigmaVault.WPF.Client.Models.Display;
 using EnigmaVault.WPF.Client.ViewModels.Abstractions;
+using SharpVectors.Converters;
+using SharpVectors.Renderers.Wpf;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace EnigmaVault.WPF.Client.ViewModels.Pages
 {
@@ -30,12 +38,16 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
         private readonly IUpdateMetaDataUseCase _updateMetaDataUseCase;
         private readonly IUpdateNoteUseCase _updateNoteUseCase;
         private readonly IUpdateFolderInSecretUseCase _updateFolderInSecretUseCase;
+        private readonly IUpdateIconInSecretUseCase _updateIconInSecretUseCase;
         private readonly IUpdateSecretUseCase _updateSecretUseCase;
 
         private readonly ICreateFolderUseCase _createFolderUseCase;
         private readonly IGetAllFoldersUseCase _getAllFoldersUseCase;
         private readonly IUpdateFolderNameUseCase _updateFolderNameUseCase;
         private readonly IDeleteFolderUseCase _deleteFolderUseCase;
+
+        private readonly IGetAllIconCategoryUseCase _getAllIconCategory;
+        private readonly IGetAllIconsUseCase _getAllIconsUseCase;
 
         public UserSecretsPageVM(IAuthorizationService authorizationService,
                                  ISecretsCryptoService secretCryptoService,
@@ -48,10 +60,13 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                                  IUpdateNoteUseCase updateNoteUseCase,
                                  IUpdateSecretUseCase updateSecretUseCase,
                                  IUpdateFolderInSecretUseCase updateFolderInSecretUseCase,
+                                 IUpdateIconInSecretUseCase updateIconIsSecretUseCase,
                                  ICreateFolderUseCase createFolderUseCase,
                                  IGetAllFoldersUseCase getAllFoldersUseCase,
                                  IDeleteFolderUseCase deleteFolderUseCase,
-                                 IUpdateFolderNameUseCase updateFolderNameUseCase)
+                                 IUpdateFolderNameUseCase updateFolderNameUseCase,
+                                 IGetAllIconCategoryUseCase getAllIconCategory,
+                                 IGetAllIconsUseCase getAllIconsUseCase)
         {
             _authorizationService = authorizationService;
             _secretCryptoService = secretCryptoService;
@@ -64,6 +79,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             _updateMetaDataUseCase = updateMetaDataUseCase;
             _updateNoteUseCase = updateNoteUseCase;
             _updateFolderInSecretUseCase = updateFolderInSecretUseCase;
+            _updateIconInSecretUseCase = updateIconIsSecretUseCase;
             _updateSecretUseCase = updateSecretUseCase;
 
             _createFolderUseCase = createFolderUseCase;
@@ -71,12 +87,18 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             _updateFolderNameUseCase = updateFolderNameUseCase;
             _deleteFolderUseCase = deleteFolderUseCase;
 
+            _getAllIconCategory = getAllIconCategory;
+            _getAllIconsUseCase = getAllIconsUseCase;
+
             SecretsView = CollectionViewSource.GetDefaultView(_secrets);
             SecretsView.Filter = FilterSecrets;
+
+            IconView = CollectionViewSource.GetDefaultView(_icons);
 
             SetVisibilityEditMenu(Visibility.Collapsed, 0);
 
             SetValueCommands();
+            SetDefaultIcon();
         }
 
         void IUpdatable.Update<TData>(TData value, TransmittingParameter parameter)
@@ -99,6 +121,10 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                 SelectedGrouping = Grouping[0];
                 SelectedSorting = Sorting[0];
 
+                await GetIconCategories();
+                await GetIcons();
+                UpdateIconsView();
+
                 IsInitialize = true;
             }
             catch (Exception ex)
@@ -119,6 +145,11 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
         private Dictionary<int, string> FolderLookup = [];
         public ObservableCollection<FolderViewModel> Folders { get; private set; } = [];
 
+        private ObservableCollection<IconViewModel> _icons { get; set; } = [];
+        public ICollectionView IconView { get; private set; } = null!;
+
+        private List<IconCategoryDto> _iconCategories { get; set; } = [];
+
         public ObservableCollection<KeyValuePair<ViewGrouping, string>> Grouping { get; private set; } = new()
         {
             new KeyValuePair<ViewGrouping, string>(ViewGrouping.None, "Не применять"),
@@ -132,6 +163,15 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             new KeyValuePair<ViewSorting, string>(ViewSorting.Ascending, "По возрастанию (от А до Я, от 0 до 9)"),
             new KeyValuePair<ViewSorting, string>(ViewSorting.Descending, "По убыванию (от Я до А, от 9 до 0)"),
         };
+
+        /*--Поля------------------------------------------------------------------------------------------*/
+
+        #region SVG иконка
+
+        private readonly Dictionary<string, DrawingImage> _iconCache = [];
+        private DrawingImage? _defaultIcon;
+
+        #endregion
 
         /*--Свойства--------------------------------------------------------------------------------------*/
 
@@ -154,6 +194,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                 UpdateEncryptedDataCommand?.RaiseCanExecuteChanged();
 
                 DecryptRecording(value!);
+
+                SelectedIcon = _icons.FirstOrDefault(i => i.SvgCode == value?.SvgCode);
             }
         }
 
@@ -173,8 +215,18 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                     SecretsView.Refresh();
                 }
             }
-        } 
+        }         
         
+        private IconViewModel? _selectedIcon;
+        public IconViewModel? SelectedIcon
+        {
+            get => _selectedIcon;
+            set
+            {
+                SetProperty(ref _selectedIcon, value);
+            }
+        }  
+
         private FolderViewModel? _selectedFolderInContextMenu;
         public FolderViewModel? SelectedFolderInContextMenu
         {
@@ -205,6 +257,13 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                 SetProperty(ref _selectedSorting, value);
                 UpdateSecretsView(SelectedGrouping.Key, value.Key);
             }
+        }
+
+        private int _selectedTabControlIndex;
+        public int SelectedTabControlIndex
+        {
+            get => _selectedTabControlIndex;
+            set => SetProperty(ref _selectedTabControlIndex, value);
         }
 
         #endregion
@@ -356,19 +415,6 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             }
         }
 
-        //private bool _isFavorite;
-        //public bool IsFavorite
-        //{
-        //    get => _isFavorite;
-        //    set
-        //    {
-        //        SetProperty(ref _isFavorite, value);
-        //        UpdateSecretCommand?.RaiseCanExecuteChanged();
-        //        UpdateFavoriteCommand?.RaiseCanExecuteChanged();
-        //    }
-        //}
-
-
         #endregion
 
         #region Управление меню с добавлением\редактированием данных
@@ -440,6 +486,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             UpdateMetadataCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateMetadataCommand, CanExecute_UpdateMetadataCommand);
             UpdateFavoriteCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateFavoriteCommand, CanExecute_UpdateFavoriteCommand);
             UpdateNoteCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateNoteCommand, CanExecute_UpdateNoteCommand);
+            UpdateIconSecretCommand = new RelayCommand<IconViewModel>(Execute_UpdateIconSecretCommand, CanExecute_UpdateIconSecretCommand);
             RemoveSecretFromFolder = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_RemoveSecretFromFolder, CanExecute_RemoveSecretFromFolder);
 
             CreateFolderCommand = new RelayCommandAsync(Execute_CreateFolderCommand, CanExecute_CreateFolderCommand);
@@ -454,6 +501,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             HideEditMenuCommand = new RelayCommand(Execute_HideEditMenuCommand, CanExecute_HideEditMenuCommand);
 
             ShowAllSecretsCommand = new RelayCommand(Execute_ShowAllSecretsCommand, CanExecute_ShowAllSecretsCommand);
+            ShowIconsListCommand = new RelayCommand(Execute_ShowIconsListCommand, CanExecute_ShowIconsListCommand);
             ShowFavoriteSecretsCommand = new RelayCommand(Execute_ShowFavoriteSecretsCommand, CanExecute_ShowFavoriteSecretsCommand);
         }
 
@@ -480,6 +528,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
             newSecret.SetFolderName(FolderViewModel.DISPLAYE_SECRETS_SYSTEM_FOLDER_NAME); // Установить названия папки для отображение у секрета в списке.
             CalculateElementsInfFolder();
+
+            SecretsView.Refresh();
         }
 
         private bool CanExecute_CreateSecretCommand() 
@@ -880,6 +930,32 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         #endregion
 
+        #region [UpdateIconSecretCommand] - Обновление иконки секрета
+
+        public RelayCommand<IconViewModel>? UpdateIconSecretCommand { get; private set; }
+
+        private async void Execute_UpdateIconSecretCommand(IconViewModel icon)
+        {
+            var result = await _updateIconInSecretUseCase.UpdateAsync(SelectedSecretData!.IdSecret, icon.SvgCode);
+
+            if (!result.IsSuccess)
+            {
+                var sb = new StringBuilder();
+
+                foreach (var item in result.Errors)
+                    sb.Append(item.Description);
+
+                MessageBox.Show(sb.ToString());
+                return;
+            }
+
+            SelectedSecretData?.SetIcon(icon!.SvgIcon!, icon.SvgCode);
+        }
+
+        private bool CanExecute_UpdateIconSecretCommand(IconViewModel icon) => SelectedSecretData != null;
+
+        #endregion
+
         /*--Shared--*/
 
         #region [OpenUrlCommand] - Переход по ссылки
@@ -929,6 +1005,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             SetVisibilityEditMenu(Visibility.Visible, 270);
 
             EditMenuColumnWidth = new GridLength(1, GridUnitType.Star);
+            SelectedTabControlIndex = 0;
 
             if (secret is null)
                 SetNulEditFields();
@@ -938,6 +1015,22 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
         } 
 
         private bool CanExecute_ShowEditMenuCommand(EncryptedSecretViewModel secret) => true;
+
+        #endregion
+
+        #region [ShowIconsListCommand] - Открыть меню с заменой иконок
+
+        public RelayCommand? ShowIconsListCommand { get; private set; }
+
+        private void Execute_ShowIconsListCommand()
+        {
+            SetVisibilityEditMenu(Visibility.Visible, 270);
+
+            EditMenuColumnWidth = new GridLength(1, GridUnitType.Star);
+            SelectedTabControlIndex = 1;
+        }
+
+        private bool CanExecute_ShowIconsListCommand() => true;
 
         #endregion
 
@@ -1010,8 +1103,15 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             }
 
             foreach (var item in result.Value!)
-                _secrets.Add(new EncryptedSecretViewModel(item));
+            {
+                var icon = await Task.Run(() => ConvertSVG(item.SvgIcon));
 
+                var display = new EncryptedSecretViewModel(item);
+                display.SetIcon(icon!, item.SvgIcon);
+
+                _secrets.Add(display);
+            }
+                
             CalculateFavoriteElements();
         }
 
@@ -1060,6 +1160,53 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
                 Folders.Add(displayedItem);
             }
+        }
+
+        #endregion
+
+        #region Icons
+
+        private async Task GetIcons()
+        {
+            var result = await _getAllIconsUseCase.GetAllAsync(_authorizationService.CurrentUser!.IdUser);
+            
+            if (!result.IsSuccess)
+            {
+                var errors = string.Join(";", result.Errors);
+                MessageBox.Show(errors);
+                return;
+            }
+
+            foreach (var item in result.Value!)
+            {
+                var icon = await Task.Run(() => ConvertSVG(item.SvgCode));
+                var categoryName = _iconCategories.FirstOrDefault(c => c.IdCategory == item.IdIconCategory)?.Name;
+
+                var display = new IconViewModel(item);
+                display.SetIcon(icon!);
+                display.SetCategoryName(categoryName ??= "#");
+
+                _icons.Add(display);
+            }
+        }
+
+        #endregion
+
+        #region IconCategories
+
+        private async Task GetIconCategories()
+        {
+            var result = await _getAllIconCategory.GetAllAsync();
+
+            if (!result.IsSuccess)
+            {
+                var errors = string.Join(";", result.Errors);
+                MessageBox.Show(errors);
+                return;
+            }
+
+            foreach (var item in result.Value!)
+                _iconCategories.Add(item);
         }
 
         #endregion
@@ -1129,6 +1276,19 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         #endregion
 
+        #region IconsView
+ 
+        private void UpdateIconsView()
+        {
+            IconView.SortDescriptions.Clear();
+            IconView.GroupDescriptions.Clear();
+
+            IconView.SortDescriptions.Add(new SortDescription("CategoryName", ListSortDirection.Ascending));
+            IconView.GroupDescriptions.Add(new PropertyGroupDescription("CategoryName"));
+        }
+
+        #endregion
+
         /*--Вспомогательные--*/
 
         #region Подсчет кол-ва элементов
@@ -1192,6 +1352,68 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             UrlSecret = secret.Url;
             NotesSecret = secret.Notes;
         }
+
+        #endregion
+
+        #region Преобразование Svg
+
+        private DrawingImage? ConvertSVG(string? svgCode)
+        {
+            ArgumentNullException.ThrowIfNull(_defaultIcon, nameof(_defaultIcon));
+
+            if (string.IsNullOrWhiteSpace(svgCode))
+                return _defaultIcon;
+
+            if (_iconCache.TryGetValue(svgCode, out var cachedIcon))
+                return cachedIcon;
+
+            var svgString = ReplaceDoubleQuotesWithSingle(svgCode)!;
+            var newIcon = ConvertSvgInString(svgString);
+
+            if (newIcon is null)
+                return _defaultIcon!;
+
+            _iconCache[svgCode] = newIcon;
+            return newIcon;
+        }
+
+        private static DrawingImage? ConvertSvgInString(string svgCode)
+        {
+            var settings = new WpfDrawingSettings
+            {
+                IncludeRuntime = true
+            };
+
+            using (var stringReader = new StringReader(svgCode))
+            {
+                var reader = new FileSvgReader(settings);
+                DrawingGroup drawingGroup = reader.Read(stringReader);
+
+                if (drawingGroup != null)
+                {
+                    var drawingImage = new DrawingImage(drawingGroup);
+
+                    drawingImage.Freeze();
+
+                    return drawingImage;
+                }
+
+                return null;
+            }
+        }
+
+        private void SetDefaultIcon()
+        {
+            if (_defaultIcon is not null) return;
+
+            var defaultIconImage = ConvertSvgInString(DefaultIconConstants.DEFOULT_SECRET_SVG) ?? throw new InvalidOperationException("Не удалось создать дефолтную иконку.");
+
+            _defaultIcon = defaultIconImage;
+
+            // _iconCache[DefaultIconConstants.DEFOULT_SECRET_SVG] = _defaultIcon;
+        }
+
+        private static string? ReplaceDoubleQuotesWithSingle(string inputString) => inputString?.Replace("\"", "'");
 
         #endregion
 

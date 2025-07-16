@@ -17,6 +17,8 @@ namespace EnigmaVault.SecretService.Application.Features.Secrets.Create
 
         public string? Notes { get; set; }
 
+        public string? SvgIcon { get;  set; }
+
         public int SchemaVersion { get; set; }
 
         public bool IsFavorite { get; set; }

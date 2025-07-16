@@ -68,7 +68,7 @@ namespace EnigmaVault.Application.UseCases.Implementations.SecretCase
                 var createdEncryptedSecretDomain = SecretDomain.Create(
                     _authorizationService.CurrentUser!.IdUser,
                     encryptedSecret.EncryptedData, encryptedSecret.Nonce,
-                    encryptedSecret.ServiceName, encryptedSecret.Url, encryptedSecret.Notes, encryptedSecret.SchemaVersion, encryptedSecret.IsFavorite);
+                    encryptedSecret.ServiceName, encryptedSecret.Url, encryptedSecret.Notes, encryptedSecret.SvgIcon, encryptedSecret.SchemaVersion, encryptedSecret.IsFavorite);
                 _logger.LogInformation("Создана доменная модель. {@createdEncryptedSecretDomain}", createdEncryptedSecretDomain);
 
                 _logger.LogInformation("Запрос к репозиторию.");

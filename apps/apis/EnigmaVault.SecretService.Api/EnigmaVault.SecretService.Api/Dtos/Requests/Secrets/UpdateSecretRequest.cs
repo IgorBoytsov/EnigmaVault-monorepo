@@ -1,4 +1,4 @@
-﻿namespace EnigmaVault.SecretService.Api.Dtos.Requests
+﻿namespace EnigmaVault.SecretService.Api.Dtos.Requests.Secrets
 {
     public class UpdateSecretRequest
     {

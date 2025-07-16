@@ -23,6 +23,8 @@
 
         public string? Notes { get; private set; }
 
+        public string? SvgIcon { get; private set; }
+
         public int SchemaVersion { get; private set; }
 
         public DateTime DateAdded { get; private set; }
@@ -31,7 +33,7 @@
 
         public bool IsFavorite { get; private set; }
 
-        public static SecretDomain Create(int idUser, byte[] encryptedData, byte[] iv, string serviceName, string? url, string? notes, int schemaVersion)
+        public static SecretDomain Create(int idUser, byte[] encryptedData, byte[] iv, string serviceName, string? url, string? notes, string? svgIcon, int schemaVersion)
         {
             DateTime dateAdded = DateTime.UtcNow;
             DateTime dateUpdate = DateTime.UtcNow;
@@ -45,6 +47,7 @@
                 ServiceName = serviceName,
                 Url = url,
                 Notes = notes,
+                SvgIcon = svgIcon,
                 SchemaVersion = schemaVersion,
                 DateAdded = dateAdded,
                 DateUpdate = dateUpdate,
@@ -52,7 +55,7 @@
             };
         }
 
-        public static SecretDomain Reconstruct(int idSecret, int idUser, int? idFolder, byte[] encryptedData, byte[] iv, string serviceName, string? url, string? notes, int schemaVersion, DateTime dateAdded, DateTime dateUpdate, bool IsFavorite)
+        public static SecretDomain Reconstruct(int idSecret, int idUser, int? idFolder, byte[] encryptedData, byte[] iv, string serviceName, string? url, string? notes, string? svgIcon, int schemaVersion, DateTime dateAdded, DateTime dateUpdate, bool IsFavorite)
         {
             return new SecretDomain
             {
@@ -64,6 +67,7 @@
                 ServiceName = serviceName,
                 Url = url,
                 Notes = notes,
+                SvgIcon = svgIcon,
                 SchemaVersion = schemaVersion,
                 DateAdded = dateAdded,
                 DateUpdate = dateUpdate,
@@ -120,6 +124,8 @@
                 UpdateDate();
             }
         }
+
+        public void UpdateSvgIcon(string? svgIcon) => SvgIcon = svgIcon;
 
         #endregion
 
