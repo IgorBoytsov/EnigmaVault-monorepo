@@ -13,6 +13,14 @@ namespace EnigmaVault.SecretService.Application.Features.Secrets.Delete
 
         public async Task<Result> Handle(DeleteSecretCommand request, CancellationToken cancellationToken)
         {
+            var domain = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
+
+            if (domain == null)
+                return Result.Failure(new Error(ErrorCode.NotFound, "Не удалось найти запись"));
+
+            if (domain.IsArchive)
+                return Result.Failure(new Error(ErrorCode.DeleteError, "Нельзя удалить запись которая находиться в архиве"));
+
             var isDelete = await _secretRepository.DeleteAsync(request.IdSecret);
 
             if (isDelete)

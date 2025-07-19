@@ -267,6 +267,19 @@ namespace EnigmaVault.SecretService.Api.Controllers
                 return NotFound(result.Errors);
         }
 
+        [HttpPatch("{id}/isArchive")]
+        public async Task<IActionResult> UpdateIsArchive([FromRoute] int id, [FromBody] UpdateIsArchiveRequest request)
+        {
+            var command = new UpdateIsArchiveCommand(id, request.IsArchive);
+
+            var result = await _mediator.Send(command);
+
+            if (result.IsSuccess)
+                return Ok();
+            else
+                return NotFound(result.Errors);
+        }
+
         /*--Delete----------------------------------------------------------------------------------------*/
 
         [HttpDelete("{id}")] 

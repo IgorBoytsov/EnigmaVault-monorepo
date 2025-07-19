@@ -1,4 +1,6 @@
-﻿namespace EnigmaVault.Domain.DomainModels
+﻿using System.IO.Compression;
+
+namespace EnigmaVault.Domain.DomainModels
 {
     public class SecretDomain
     {
@@ -33,6 +35,8 @@
 
         public bool IsFavorite { get; private set; }
 
+        public bool IsArchive { get; private set; }
+
         public static SecretDomain Create(int idUser, string encryptedData, string nonce, string serviceName, string? url, string? notes, string svgIcon, int schemaVersion, bool isFavorite)
         {
             return new SecretDomain()
@@ -49,7 +53,7 @@
             };
         }
 
-        public static SecretDomain Reconstruct(int idSecret, int? idFolder, string encryptedData, string nonce, string serviceName, string? url, string? notes, string svgIcon, int schemaVersion, DateTime? dateAdded, DateTime? dateUpdate, bool isFavorite)
+        public static SecretDomain Reconstruct(int idSecret, int? idFolder, string encryptedData, string nonce, string serviceName, string? url, string? notes, string svgIcon, int schemaVersion, DateTime? dateAdded, DateTime? dateUpdate, bool isFavorite, bool isArchive)
         {
             return new SecretDomain()
             {
@@ -64,7 +68,8 @@
                 SchemaVersion = schemaVersion,
                 DateAdded = dateAdded,
                 DateUpdate = dateUpdate,
-                IsFavorite = isFavorite
+                IsFavorite = isFavorite,
+                IsArchive = isArchive
             };
         }
     }

@@ -89,6 +89,7 @@ public partial class SecretDBContext : DbContext
             entity.Property(e => e.EncryptedData).HasColumnName("encrypted_data");
             entity.Property(e => e.IdFolder).HasColumnName("id_folder");
             entity.Property(e => e.IdUser).HasColumnName("id_user");
+            entity.Property(e => e.IsArchive).HasColumnName("isArchive");
             entity.Property(e => e.IsFavorite).HasColumnName("isFavorite");
             entity.Property(e => e.Nonce)
                 .HasMaxLength(12)

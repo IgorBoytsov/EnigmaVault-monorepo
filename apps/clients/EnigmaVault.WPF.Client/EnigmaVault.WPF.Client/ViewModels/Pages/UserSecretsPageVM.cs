@@ -35,6 +35,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         private readonly IUpdateEncryptedDataUseCase _updateEncryptedDataUseCase;
         private readonly IUpdateFavoriteUseCase _updateFavoriteUseCase;
+        private readonly IUpdateIsArchiveUseCase _updateIsArchiveUseCase;
         private readonly IUpdateMetaDataUseCase _updateMetaDataUseCase;
         private readonly IUpdateNoteUseCase _updateNoteUseCase;
         private readonly IUpdateFolderInSecretUseCase _updateFolderInSecretUseCase;
@@ -56,6 +57,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                                  IGetAllSecretsUseCase getAllSecretsUseCase,
                                  IUpdateEncryptedDataUseCase updateEncryptedDataUseCase,
                                  IUpdateFavoriteUseCase updateFavoriteUseCase,
+                                 IUpdateIsArchiveUseCase updateIsArchiveUseCase,
                                  IUpdateMetaDataUseCase updateMetaDataUseCase, 
                                  IUpdateNoteUseCase updateNoteUseCase,
                                  IUpdateSecretUseCase updateSecretUseCase,
@@ -76,6 +78,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
             _updateEncryptedDataUseCase = updateEncryptedDataUseCase;
             _updateFavoriteUseCase = updateFavoriteUseCase;
+            _updateIsArchiveUseCase = updateIsArchiveUseCase;
             _updateMetaDataUseCase = updateMetaDataUseCase;
             _updateNoteUseCase = updateNoteUseCase;
             _updateFolderInSecretUseCase = updateFolderInSecretUseCase;
@@ -99,6 +102,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
             SetValueCommands();
             SetDefaultIcon();
+
+            ArchivedSecrets.CollectionChanged += OnArchivedSecretsChanged!;
         }
 
         void IUpdatable.Update<TData>(TData value, TransmittingParameter parameter)
@@ -141,6 +146,8 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         private ObservableCollection<EncryptedSecretViewModel> _secrets { get; set; } = [];
         public ICollectionView SecretsView { get; private set; } = null!;
+
+        public ObservableCollection<EncryptedSecretViewModel> ArchivedSecrets {  get; private set; } = [];
 
         private Dictionary<int, string> FolderLookup = [];
         public ObservableCollection<FolderViewModel> Folders { get; private set; } = [];
@@ -474,6 +481,28 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         #endregion
 
+        /*---Popup---*/
+
+        #region Popup : ArchivePopup
+
+        private bool _isArchivePopupOpen;
+        public bool IsArchivePopupOpen
+        {
+            get => _isArchivePopupOpen;
+            set
+            {
+                if (value && IsArchiveEmpty)
+                    return;
+
+                if (SetProperty(ref _isArchivePopupOpen, value))
+                    _isArchivePopupOpen = value;
+            }
+        }
+
+        public bool IsArchiveEmpty => ArchivedSecrets == null || ArchivedSecrets.Count == 0;
+
+        #endregion 
+
         /*--Команды---------------------------------------------------------------------------------------*/
 
         private void SetValueCommands()
@@ -485,6 +514,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             UpdateEncryptedDataCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateEncryptedDataCommand, CanExecute_UpdateEncryptedDataCommand);
             UpdateMetadataCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateMetadataCommand, CanExecute_UpdateMetadataCommand);
             UpdateFavoriteCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateFavoriteCommand, CanExecute_UpdateFavoriteCommand);
+            UpdateArchiveCommand = new RelayCommand<EncryptedSecretViewModel>(Execute_UpdateArchiveCommand, CanExecute_UpdateArchiveCommand);
             UpdateNoteCommand = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_UpdateNoteCommand, CanExecute_UpdateNoteCommand);
             UpdateIconSecretCommand = new RelayCommand<IconViewModel>(Execute_UpdateIconSecretCommand, CanExecute_UpdateIconSecretCommand);
             RemoveSecretFromFolder = new RelayCommandAsync<EncryptedSecretViewModel>(Execute_RemoveSecretFromFolder, CanExecute_RemoveSecretFromFolder);
@@ -527,6 +557,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             _secrets.Add(newSecret);
 
             newSecret.SetFolderName(FolderViewModel.DISPLAYE_SECRETS_SYSTEM_FOLDER_NAME); // Установить названия папки для отображение у секрета в списке.
+            newSecret.SetIcon(_defaultIcon!, DefaultIconConstants.DEFOULT_SECRET_SVG);
             CalculateElementsInfFolder();
 
             SecretsView.Refresh();
@@ -621,6 +652,12 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         private async Task Execute_DeleteSecretCommand(EncryptedSecretViewModel secret)
         {
+            if (secret.IsArchive)
+            {
+                MessageBox.Show("Нельзя удалить архивированную запись");
+                return;
+            }
+
             if (MessageBox.Show($"Вы точно хотите удалить данные: {secret.ServiceName}?", "Предупреждение", MessageBoxButton.YesNo) == MessageBoxResult.No)
                 return;
 
@@ -867,6 +904,46 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
 
         #endregion
 
+        #region [UpdateArchiveCommand] - Добавление \ удаление в архив
+
+        public RelayCommand<EncryptedSecretViewModel>? UpdateArchiveCommand { get; private set; }
+
+        private async void Execute_UpdateArchiveCommand(EncryptedSecretViewModel secret)
+        {
+            var newArchiveState = !secret.IsArchive;
+            secret.IsArchive = newArchiveState;
+
+            var result = await _updateIsArchiveUseCase.UpdateArchiveAsync(secret.IdSecret, newArchiveState);
+
+            if (!result.IsSuccess)
+            {
+                var errors = string.Join(";", result.Errors);
+                MessageBox.Show(errors);
+
+                secret.IsArchive = !newArchiveState;
+                return;
+            }
+
+            if (secret.IsArchive)
+            {
+                ArchivedSecrets.Add(secret);
+                _secrets.Remove(secret);
+            }
+            else
+            {
+                _secrets.Add(secret);
+                ArchivedSecrets.Remove(secret);
+            }
+
+            CalculateElementsInfFolder();
+            CalculateElementsInfFolder(secret.IdFolder);
+            CalculateFavoriteElements();
+        }
+
+        private bool CanExecute_UpdateArchiveCommand(EncryptedSecretViewModel secret) => secret is not null;
+
+        #endregion
+
         #region [UpdateNoteCommand] - Обновление заметки
 
         public RelayCommandAsync<EncryptedSecretViewModel>? UpdateNoteCommand { get; private set; }
@@ -1109,7 +1186,7 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
                 var display = new EncryptedSecretViewModel(item);
                 display.SetIcon(icon!, item.SvgIcon);
 
-                _secrets.Add(display);
+                (display.IsArchive ? ArchivedSecrets : _secrets).Add(display);
             }
                 
             CalculateFavoriteElements();
@@ -1443,6 +1520,20 @@ namespace EnigmaVault.WPF.Client.ViewModels.Pages
             VisibilityEditMenu = visibility;
             EditMenuColumnWidth = new GridLength(minWidthEditMenu);
             MinWidthEditMenu = minWidthEditMenu;
+        }
+
+        #endregion
+
+        /*--Методы (OnChanged)----------------------------------------------------------------------------*/
+
+        #region Коллекции
+
+        private void OnArchivedSecretsChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(IsArchiveEmpty));
+
+            if (IsArchiveEmpty && IsArchivePopupOpen)
+                IsArchivePopupOpen = false;
         }
 
         #endregion

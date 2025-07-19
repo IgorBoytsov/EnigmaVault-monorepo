@@ -13,6 +13,7 @@
         public DateTime? DateAdded { get; set; }
         public DateTime? DateUpdate { get; set; }
         public bool IsFavorite { get; set; }
+        public bool IsArchive { get; set; }
 
         public string EncryptedData { get; set; }
         public string Nonce { get; set; }

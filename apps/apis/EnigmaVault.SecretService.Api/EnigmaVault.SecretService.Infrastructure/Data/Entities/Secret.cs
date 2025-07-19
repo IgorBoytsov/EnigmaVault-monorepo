@@ -31,5 +31,7 @@ public partial class Secret
 
     public int? IdFolder { get; set; }
 
+    public bool IsArchive { get; set; }
+
     public virtual Folder? IdFolderNavigation { get; set; }
 }

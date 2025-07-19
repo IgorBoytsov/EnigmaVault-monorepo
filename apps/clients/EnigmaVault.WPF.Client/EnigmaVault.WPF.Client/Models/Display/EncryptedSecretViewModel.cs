@@ -154,6 +154,19 @@ namespace EnigmaVault.WPF.Client.Models.Display
             }
         }
 
+        public bool IsArchive
+        {
+            get => _model.IsArchive;
+            set
+            {
+                if (_model.IsArchive != value)
+                {
+                    _model.IsArchive = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public string ServiceNameFirstLetter
         {
             get

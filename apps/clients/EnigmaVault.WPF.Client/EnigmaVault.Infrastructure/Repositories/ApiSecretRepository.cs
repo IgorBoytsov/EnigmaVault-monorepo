@@ -8,7 +8,6 @@ using EnigmaVault.Infrastructure.Models.Request;
 using EnigmaVault.Infrastructure.Models.Response;
 using EnigmaVault.Infrastructure.Services.Abstractions;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -67,7 +66,7 @@ namespace EnigmaVault.Infrastructure.Repositories
                         secretResponse!.IdSecret, secretResponse.IdFolder,
                         secretResponse.EncryptedData, secretResponse.Nonce,
                         secretResponse.ServiceName, secretResponse.Url, secretResponse.Notes, secretResponse.SvgIcon, secretResponse.SchemaVersion,
-                        secretResponse.DateAdded, secretResponse.DateUpdate, secretResponse.IsFavorite);
+                        secretResponse.DateAdded, secretResponse.DateUpdate, secretResponse.IsFavorite, secretResponse.IsArchive);
 
                     _logger.LogInformation("Секрет успешно создан: {@secretDomain}", secretDomain);
 
@@ -102,7 +101,7 @@ namespace EnigmaVault.Infrastructure.Repositories
 
                     List<SecretDomain> secrets = secretsResponse.Select(s => SecretDomain.Reconstruct(
                         s.IdSecret, s.IdFolder, s.EncryptedData, s.Nonce, s.ServiceName, s.Url, s.Notes, s.SvgIcon, s.SchemaVersion,
-                        s.DateAdded, s.DateUpdate, s.IsFavorite)).ToList();
+                        s.DateAdded, s.DateUpdate, s.IsFavorite, s.IsArchive)).ToList();
 
                     _logger.LogInformation("Список из {Count} секретов успешно получен.", secrets.Count);
                     return Result<List<SecretDomain>?>.Success(secrets);
@@ -306,6 +305,28 @@ namespace EnigmaVault.Infrastructure.Repositories
                     return await _apiRequestHandler.HandleApiErrorAsync(response, "обновление папки, в которой лежит секрет");
 
             }, "обновление папки, в которой лежит секрет");
+        }
+
+        public async Task<Result> UpdateIsArchiveAsync(int idSecret, bool isArchive)
+        {
+            const string operationName = "изменение статуса архивации записи";
+            return await _apiRequestHandler.ExecuteApiCallAsync(async () =>
+            {
+                string endpoint = $"api/secrets/{idSecret}/isArchive";
+
+                var payload = new
+                {
+                    IsArchive = isArchive
+                };
+
+                HttpResponseMessage response = await _httpClient.PatchAsJsonAsync(endpoint, payload);
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                    return Result.Success();
+                else
+                    return await _apiRequestHandler.HandleApiErrorAsync(response, operationName);
+
+            }, operationName);
         }
 
         /*--Delete----------------------------------------------------------------------------------------*/

@@ -17,6 +17,7 @@ namespace EnigmaVault.SecretService.Application.Mappers
                 DateAdded = domain.DateAdded,
                 DateUpdate = domain.DateUpdate,
                 IsFavorite = domain.IsFavorite,
+                IsArchive = domain.IsArchive,
                 Url = domain.Url,
                 Notes = domain.Notes,
                 SvgIcon = domain.SvgIcon,
