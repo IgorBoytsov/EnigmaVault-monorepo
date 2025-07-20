@@ -16,18 +16,33 @@ namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
             if (request is null)
                 return Result<DateTime>.Failure(new Error(ErrorCode.NullValue, $"Значение {nameof(request)} было пустым"));
 
-            if (!await _secretRepository.ExistSecret(request.IdSecret))
-                errors.Add(new Error(ErrorCode.NotFound, "Данной записи не существует."));
-
             if (string.IsNullOrWhiteSpace(request.ServiceName))
                 errors.Add(new Error(ErrorCode.Empty, $"Не было указано название записи."));
 
             if (errors.Any())
                 return Result<DateTime>.Failure(errors);
 
-            var result = await _secretRepository.UpdateMetadataAsync(request);
+            var storage = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
 
-            return result;
+            if (storage is null)
+                return Result<DateTime>.Failure(new Error(ErrorCode.NotFound, "Данной записи не существует."));
+
+            try
+            {
+                storage.UpdateMetadata(request.ServiceName, request.Url);
+
+                var result = await _secretRepository.UpdateAsync(storage);
+
+                return result;
+            }
+            catch(ArgumentNullException ex) 
+            {
+                return Result<DateTime>.Failure(new Error(ErrorCode.DomainError, $"Ошибка обновление мета данных в домене. Вероятно они были равны null. Исключение: {ex.Message}"));
+            }
+            catch (Exception ex)
+            {
+                return Result<DateTime>.Failure(new Error(ErrorCode.UnknownError, $"Неизвестная ошибка. Исключение: {ex.Message}"));
+            }
         }
     }
 }

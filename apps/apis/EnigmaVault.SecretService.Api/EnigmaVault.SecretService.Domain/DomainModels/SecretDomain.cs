@@ -1,8 +1,6 @@
-﻿using System.IO.Compression;
-
-namespace EnigmaVault.SecretService.Domain.DomainModels
+﻿namespace EnigmaVault.SecretService.Domain.DomainModels
 {
-    public class SecretDomain
+    public sealed class SecretDomain
     {
         private SecretDomain()
         {
@@ -97,7 +95,7 @@ namespace EnigmaVault.SecretService.Domain.DomainModels
         public void UpdateMetadata(string serviceName, string? url)
         {
             if (string.IsNullOrWhiteSpace(serviceName))
-                throw new ArgumentException("Название сервиса не может быть пустым.", nameof(serviceName));
+                throw new ArgumentNullException("Название сервиса не может быть пустым.");
 
             if (ServiceName != serviceName || Url != url)
             {
@@ -130,7 +128,37 @@ namespace EnigmaVault.SecretService.Domain.DomainModels
             }
         }
 
-        public void UpdateSvgIcon(string? svgIcon) => SvgIcon = svgIcon;
+        public void UpdateSvgIcon(string? svgIcon)
+        {
+            if (SvgIcon != svgIcon)
+            {
+                SvgIcon = svgIcon;
+            }
+        }
+
+        public void UpdateFolder(int? idFolder)
+        {
+            if (IdFolder != idFolder)
+            {
+                IdFolder = idFolder;
+            }
+        }
+
+        public void ToggleFavorite(bool isFavorite)
+        {
+            if (IsFavorite != isFavorite)
+            {
+                IsFavorite = isFavorite;
+            }
+        }
+
+        public void ToggleArchive(bool isArchive)
+        {
+            if (IsArchive != isArchive)
+            {
+                IsArchive = isArchive;
+            }
+        }
 
         #endregion
 

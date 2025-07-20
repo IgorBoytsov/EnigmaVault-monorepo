@@ -11,10 +11,14 @@ namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 
         public async Task<Result<DateTime>> Handle(UpdateNoteCommand request, CancellationToken cancellationToken)
         {
-            if (!await _secretRepository.ExistSecret(request.IdSecret))
+            var storage = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
+
+            if (storage is null)
                 return Result<DateTime>.Failure(new Error(ErrorCode.NotFound, "Данной записи не существует."));
 
-            var result = await _secretRepository.UpdateNoteAsync(request);
+            storage.UpdateNote(request.Note);
+
+            var result = await _secretRepository.UpdateAsync(storage);
 
             return result;
         }

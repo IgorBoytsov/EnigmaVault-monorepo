@@ -1,13 +1,12 @@
 ﻿using EnigmaVault.SecretService.Application.Abstractions.Repositories;
 using EnigmaVault.SecretService.Application.Features.Secrets;
-using EnigmaVault.SecretService.Application.Features.Secrets.Update;
 using EnigmaVault.SecretService.Domain.DomainModels;
+using EnigmaVault.SecretService.Domain.Enums;
 using EnigmaVault.SecretService.Domain.Results;
 using EnigmaVault.SecretService.Infrastructure.Data;
 using EnigmaVault.SecretService.Infrastructure.Data.Entities;
 using EnigmaVault.SecretService.Infrastructure.Services.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using System.IO.Compression;
 using System.Runtime.CompilerServices;
 
 namespace EnigmaVault.SecretService.Infrastructure.Repositories
@@ -88,74 +87,29 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
 
         /*--Update----------------------------------------------------------------------------------------*/
 
-        public async Task<Result<DateTime>> UpdateAsync(SecretDomain secret)
-            => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
-                predicate: secretInDb => secretInDb.IdSecret == secret.IdSecret,
-                setPropertyCalls: us => us
-                    .SetProperty(p => p.EncryptedData, secret.EncryptedData)
-                    .SetProperty(p => p.Nonce, secret.Nonce)
-                    .SetProperty(p => p.ServiceName, secret.ServiceName)
-                    .SetProperty(p => p.Url, secret.Url) 
-                    .SetProperty(p => p.Notes, secret.Notes)
-                    .SetProperty(p => p.SchemaVersion, secret.SchemaVersion)
-                    .SetProperty(p => p.IsFavorite, secret.IsFavorite)
-                    .SetProperty(p => p.DateUpdate, secret.DateUpdate),
-                selector: secret => secret.DateUpdate);
+        public async Task<Result<DateTime>> UpdateAsync(SecretDomain domain)
+        {
+            var storage = await _context.Secrets.FirstOrDefaultAsync(s => s.IdSecret == domain.IdSecret);
 
-        public async Task<Result<DateTime>> UpdateMetadataAsync(UpdateMetadataCommand command)
-            => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
-                predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
-                setPropertyCalls: us => us
-                    .SetProperty(p => p.ServiceName, command.ServiceName)
-                    .SetProperty(p => p.Url, command.Url)
-                    .SetProperty(p => p.DateUpdate, DateTime.UtcNow),
-                selector: secret => secret.DateUpdate);
+            if (storage is null)
+                return Result<DateTime>.Failure(new Error(ErrorCode.UpdateError, "Не найдена запись."));
 
-        public async Task<Result<DateTime>> UpdateEncryptedDataAsync(UpdateEncryptedDataCommand command)
-            => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
-                predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
-                setPropertyCalls: us => us
-                .SetProperty(p => p.EncryptedData, command.EncryptedData)
-                .SetProperty(p => p.Nonce, command.Nonce)
-                .SetProperty(p => p.SchemaVersion, command.SchemaVersion)
-                .SetProperty(p => p.DateUpdate, DateTime.UtcNow),
-                selector: secret => secret.DateUpdate);
+            MapFromDomain(domain, storage);
 
-        public async Task<Result<DateTime>> UpdateFavoriteAsync(UpdateFavoriteCommand command)
-            => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
-                predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
-                setPropertyCalls: us => us
-                .SetProperty(p => p.IsFavorite, command.IsFavorite)
-                .SetProperty(p => p.DateUpdate, DateTime.UtcNow),
-                selector: secret => secret.DateUpdate);
+            try
+            {
+                var countLineInUpdate = await _context.SaveChangesAsync();
 
-        public async Task<Result<DateTime>> UpdateNoteAsync(UpdateNoteCommand command)
-            => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
-                 predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
-                 setPropertyCalls: us => us
-                .SetProperty(p => p.Notes, command.Note)
-                .SetProperty(p => p.DateUpdate, DateTime.UtcNow),
-                selector: secret => secret.DateUpdate);
-
-        public async Task<Result<DateTime>> UpdateSvgIconAsync(UpdateSvgIconCommand command)
-            => await _entityUpdater.UpdateAndGetAsync<Secret, DateTime>(
-                 predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
-                 setPropertyCalls: us => us
-                .SetProperty(p => p.SvgIcon, command.SvgIcon)
-                .SetProperty(p => p.DateUpdate, DateTime.UtcNow),
-                selector: secret => secret.DateUpdate);
-
-        public async Task<Result> UpdateFolderAsync(UpdateSecretFolderCommand command)
-            => await _entityUpdater.UpdatePropertyAsync<Secret>(
-                predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
-                setPropertyCalls: us => us
-                .SetProperty(p => p.IdFolder, command.IdFolder));
-
-        public async Task<Result> UpdateIsArchiveAsync(UpdateIsArchiveCommand command)
-            => await _entityUpdater.UpdatePropertyAsync<Secret>(
-                predicate: secretInDb => secretInDb.IdSecret == command.IdSecret,
-                setPropertyCalls: us => us
-                .SetProperty(p => p.IsArchive, command.IsArchive));
+                if (countLineInUpdate > 0)
+                    return Result<DateTime>.Success(storage.DateUpdate);
+                else
+                    return Result<DateTime>.Failure(new Error(ErrorCode.UpdateError, "Не удалось изменить данные."));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result<DateTime>.Failure(new Error(ErrorCode.ConcurrencyError, "Данные были изменены другим пользователем. Пожалуйста, обновите страницу."));
+            }  
+        }
 
         /*--Delete----------------------------------------------------------------------------------------*/
 
@@ -172,5 +126,26 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
         /*--Exist-----------------------------------------------------------------------------------------*/
 
         public async Task<bool> ExistSecret(int idSecret) => await _context.Secrets.AnyAsync(s => s.IdSecret == idSecret);
+
+        /*--Вспомогательные-------------------------------------------------------------------------------*/
+
+        private static void MapFromDomain(SecretDomain secretDomain, Secret secretToUpdate)
+        {
+            secretToUpdate.EncryptedData = secretDomain.EncryptedData;
+            secretToUpdate.Nonce= secretDomain.Nonce;
+            secretToUpdate.SchemaVersion= secretDomain.SchemaVersion;
+
+            secretToUpdate.ServiceName = secretDomain.ServiceName;
+            secretToUpdate.Url = secretDomain.Url;
+            secretToUpdate.Notes = secretDomain.Notes;
+            secretToUpdate.SvgIcon = secretDomain.SvgIcon;
+
+            secretToUpdate.IsFavorite = secretDomain.IsFavorite;
+            secretToUpdate.IsArchive = secretDomain.IsArchive;
+
+            secretToUpdate.IdFolder = secretDomain.IdFolder;
+
+            secretToUpdate.DateUpdate = secretDomain.DateUpdate;
+        }
     }
 }

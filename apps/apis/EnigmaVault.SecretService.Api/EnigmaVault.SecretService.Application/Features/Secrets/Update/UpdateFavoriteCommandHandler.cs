@@ -5,16 +5,20 @@ using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 {
-    public class UpdateFavoriteCommandHandler(ISecretRepository secretRepository) : IRequestHandler<UpdateFavoriteCommand, Result<DateTime>>
+    public sealed class UpdateFavoriteCommandHandler(ISecretRepository secretRepository) : IRequestHandler<UpdateFavoriteCommand, Result<DateTime>>
     {
         private readonly ISecretRepository _secretRepository = secretRepository;
 
         public async Task<Result<DateTime>> Handle(UpdateFavoriteCommand request, CancellationToken cancellationToken)
         {
-            if (!await _secretRepository.ExistSecret(request.IdSecret))
+            var storage = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
+
+            if (storage is null)
                 return Result<DateTime>.Failure(new Error(ErrorCode.NotFound, $"Данной записи не существует."));
 
-            var result = await _secretRepository.UpdateFavoriteAsync(request);
+            storage.ToggleFavorite(request.IsFavorite);
+
+            var result = await _secretRepository.UpdateAsync(storage);
 
             return result;
         }

@@ -14,10 +14,7 @@ namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
             var errors = new List<Error>();
 
             if (request is null)
-                return Result<DateTime>.Failure(new Error(ErrorCode.NullValue, $"Значение {nameof(request)} было пустым"));
-
-            if (!await _secretRepository.ExistSecret(request.IdSecret))
-                errors.Add(new Error(ErrorCode.NotFound, "Данной записи не существует."));
+                return Result<DateTime>.Failure(new Error(ErrorCode.NullValue, $"Команда была пустая"));
 
             if (request.EncryptedData is null)
                 errors.Add(new Error(ErrorCode.Empty, $"Не были указаны зашифрованные данные."));
@@ -26,14 +23,32 @@ namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
                 errors.Add(new Error(ErrorCode.Empty, $"Не были указан Nonce."));
 
             if (request.SchemaVersion <= 0)
-                errors.Add(new Error(ErrorCode.Empty, $"Версия схемы указа не корректно. Самая минимальная версия - 1."));
+                errors.Add(new Error(ErrorCode.Empty, $"Версия схемы указа не корректно. Самая минимальная версия (1)."));
 
             if (errors.Any())
                 return Result<DateTime>.Failure(errors);
 
-            var result = await _secretRepository.UpdateEncryptedDataAsync(request);
+            var storage = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
 
-            return result;
+            if (storage is null)
+                return Result<DateTime>.Failure(new Error(ErrorCode.NotFound, "Данной записи не существует."));
+
+            try
+            {
+                storage.UpdateEncryptedPayload(request.EncryptedData!, request.Nonce!, request.SchemaVersion);
+
+                var result = await _secretRepository.UpdateAsync(storage);
+
+                return result;
+            }
+            catch (ArgumentNullException ex)
+            {
+                return Result<DateTime>.Failure(new Error(ErrorCode.DomainError, $"Ошибка обновление зашифрованных данных в домене. Вероятно они были равны null. Исключение: {ex.Message}"));
+            }
+            catch (Exception ex)
+            {
+                return Result<DateTime>.Failure(new Error(ErrorCode.UnknownError, $"Неизвестная ошибка. Исключение: {ex.Message}"));
+            }
         }
     }
 }

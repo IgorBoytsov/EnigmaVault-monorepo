@@ -3,14 +3,19 @@
     public enum ErrorCode
     {
         None,
+        UnknownError,
         NullValue,
         Empty,
         NotFound,
+
+        ConcurrencyError,
 
         CreateError,
         SaveError,
         UpdateError,
         DeleteError,
         CannotBeUpdated,
+
+        DomainError,
     }
 }
