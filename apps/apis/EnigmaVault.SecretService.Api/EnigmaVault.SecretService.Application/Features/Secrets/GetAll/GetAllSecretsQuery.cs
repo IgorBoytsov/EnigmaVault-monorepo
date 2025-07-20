@@ -2,8 +2,5 @@
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.GetAll
 {
-    public class GetAllSecretsQuery : IRequest<IAsyncEnumerable<SecretDto>>
-    {
-        public int UserId { get; set; }
-    }
+    public sealed record GetAllSecretsQuery(int UserId) : IRequest<IAsyncEnumerable<SecretDto>>;
 }

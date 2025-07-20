@@ -3,8 +3,5 @@ using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Delete
 {
-    public class DeleteSecretCommand : IRequest<Result>
-    {
-        public int IdSecret { get; set; }
-    }
+    public sealed record DeleteSecretCommand(int IdSecret) : IRequest<Result>;
 }

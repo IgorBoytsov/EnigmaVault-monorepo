@@ -15,7 +15,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
 {
     [Route("api/secrets")]
     [ApiController]
-    public class SecretsController : ControllerBase
+    public sealed class SecretsController : ControllerBase
     {
         private readonly IMediator _mediator;
 
@@ -49,7 +49,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetSecretById([FromRoute] int id)
         {
-            var query = new GetSecretByIdQuery { IdSecret = id };
+            var query = new GetSecretByIdQuery(id);
 
             Result<SecretDto> result = await _mediator.Send(query);
 
@@ -67,24 +67,17 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateSecret([FromRoute] int id, [FromBody] UpdateSecretRequest request)
         {
-            var command = new UpdateSecretCommand
-            {
-                IdSecret = id,
-                ServiceName = request.ServiceName,
-                Url = request.Url,
-                IsFavorite = request.IsFavorite,
-                Note = request.Note,
-                EncryptedData = request.EncryptedData,
-                Nonce = request.Nonce,
-                SchemaVersion = request.SchemaVersion
-            };
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new UpdateSecretCommand(id, request.ServiceName, request.Url, request.IsFavorite, request.Note, request.EncryptedData, request.Nonce, request.SchemaVersion);
 
             Console.WriteLine(command.Note);
             var result = await _mediator.Send(command);
 
             if (result.IsSuccess)
             {
-                var response = new UpdateSecretResponse { DateUpdate = result.Value };
+                var response = new UpdateSecretResponse(result.Value);
                 return Ok(response);
             }
             else
@@ -103,22 +96,16 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateEncryptedData([FromRoute] int id, [FromBody] UpdateEncryptedDataRequest request)
         {
-            var command = new UpdateEncryptedDataCommand
-            {
-                IdSecret = id,
-                EncryptedData = request.EncryptedData,
-                Nonce = request.Nonce,
-                SchemaVersion = request.SchemaVersion
-            };
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new UpdateEncryptedDataCommand(id, request.EncryptedData, request.Nonce, request.SchemaVersion);
 
             var result = await _mediator.Send(command);
 
             if (result.IsSuccess)
             {
-                var response = new UpdateSecretResponse
-                {
-                    DateUpdate = result.Value
-                };
+                var response = new UpdateSecretResponse(result.Value);
 
                 return Ok(response);
             }
@@ -139,21 +126,16 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateMetadata([FromRoute] int id, [FromBody] UpdateMetadataRequest request)
         {
-            var command = new UpdateMetadataCommand
-            {
-                IdSecret = id,
-                ServiceName = request.ServiceName,
-                Url = request.Url,
-            };
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new UpdateMetadataCommand(id, request.ServiceName, request.Url);
 
             var result = await _mediator.Send(command);
 
             if (result.IsSuccess)
             {
-                var response = new UpdateSecretResponse
-                {
-                    DateUpdate = result.Value
-                };
+                var response = new UpdateSecretResponse(result.Value);
 
                 return Ok(response);
             }
@@ -173,20 +155,16 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateFavorite([FromRoute] int id, [FromBody] UpdateFavoriteRequest request)
         {
-            var command = new UpdateFavoriteCommand
-            {
-                IdSecret = id,
-                IsFavorite = request.IsFavorite,
-            };
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new UpdateFavoriteCommand(id, request.IsFavorite);
 
             var result = await _mediator.Send(command);
 
             if (result.IsSuccess)
             {
-                var response = new UpdateSecretResponse
-                {
-                    DateUpdate = result.Value
-                };
+                var response = new UpdateSecretResponse(result.Value);
 
                 return Ok(response);
             }
@@ -201,20 +179,16 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateNote([FromRoute] int id, [FromBody] UpdateNoteRequest request)
         {
-            var command = new UpdateNoteCommand
-            {
-                IdSecret = id,
-                Note = request.Note,
-            };
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new UpdateNoteCommand(id, request.Note);
 
             var result = await _mediator.Send(command);
 
             if (result.IsSuccess)
             {
-                var response = new UpdateSecretResponse
-                {
-                    DateUpdate = result.Value
-                };
+                var response = new UpdateSecretResponse(result.Value);
 
                 return Ok(response);
             }
@@ -229,16 +203,16 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateSvgIcon([FromRoute] int id, [FromBody] UpdateSvgIconInSecretRequest request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var command = new UpdateSvgIconCommand(id, request.SvgIcon);
 
             var result = await _mediator.Send(command);
 
             if (result.IsSuccess)
             {
-                var response = new UpdateSecretResponse
-                {
-                    DateUpdate = result.Value
-                };
+                var response = new UpdateSecretResponse(result.Value);
 
                 return Ok(response);
             }
@@ -253,11 +227,10 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateFolder([FromRoute] int id, [FromBody] UpdateSecretFolderRequest request)
         {
-            var command = new UpdateSecretFolderCommand
-            {
-                IdSecret = id,
-                IdFolder = request.IdFolder,
-            };
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new UpdateSecretFolderCommand(id, request.IdFolder);
 
             var result = await _mediator.Send(command);
 
@@ -270,6 +243,9 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [HttpPatch("{id}/isArchive")]
         public async Task<IActionResult> UpdateIsArchive([FromRoute] int id, [FromBody] UpdateIsArchiveRequest request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var command = new UpdateIsArchiveCommand(id, request.IsArchive);
 
             var result = await _mediator.Send(command);
@@ -289,7 +265,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> DeleteSecret([FromRoute] int id)
         {
-            var command = new DeleteSecretCommand { IdSecret = id };
+            var command = new DeleteSecretCommand(id);
 
             var result = await _mediator.Send(command);
 

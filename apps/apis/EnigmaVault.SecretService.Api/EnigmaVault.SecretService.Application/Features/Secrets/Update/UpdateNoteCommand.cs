@@ -3,10 +3,5 @@ using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 {
-    public class UpdateNoteCommand : IRequest<Result<DateTime>>
-    {
-        public int IdSecret { get; set; }
-
-        public string? Note { get; set; }
-    }
+    public sealed record UpdateNoteCommand(int IdSecret, string? Note) : IRequest<Result<DateTime>>;
 }

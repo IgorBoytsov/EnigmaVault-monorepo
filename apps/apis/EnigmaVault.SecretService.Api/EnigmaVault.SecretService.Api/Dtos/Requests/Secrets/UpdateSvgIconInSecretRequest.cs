@@ -1,6 +1,4 @@
 ﻿namespace EnigmaVault.SecretService.Api.Dtos.Requests.Secrets
 {
-    public record UpdateSvgIconInSecretRequest(string? SvgIcon)
-    {
-    }
+    public record UpdateSvgIconInSecretRequest(string? SvgIcon);
 }

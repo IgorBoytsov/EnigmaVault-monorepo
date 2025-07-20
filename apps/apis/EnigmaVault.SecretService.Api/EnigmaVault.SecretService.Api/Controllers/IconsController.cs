@@ -12,7 +12,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
 {
     [Route("api/icons")]
     [ApiController]
-    public class IconsController : Controller
+    public sealed class IconsController : Controller
     {
         private readonly IMediator _mediator;
 

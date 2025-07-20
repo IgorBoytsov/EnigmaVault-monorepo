@@ -1,16 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace EnigmaVault.SecretService.Api.Dtos.Requests.Secrets
+﻿namespace EnigmaVault.SecretService.Api.Dtos.Requests.Secrets
 {
-    public class UpdateEncryptedDataRequest
-    {
-        [Required]
-        public byte[] EncryptedData { get; set; } = null!;
-
-        [Required]
-        public byte[] Nonce { get; set; } = null!;
-
-        [Required]
-        public int SchemaVersion { get; set; }
-    }
+    public sealed record UpdateEncryptedDataRequest(byte[] EncryptedData, byte[] Nonce, int SchemaVersion);
 }

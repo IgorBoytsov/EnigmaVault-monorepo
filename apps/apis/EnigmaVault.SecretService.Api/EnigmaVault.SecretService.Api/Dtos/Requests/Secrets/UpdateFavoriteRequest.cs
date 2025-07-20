@@ -1,10 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace EnigmaVault.SecretService.Api.Dtos.Requests.Secrets
+﻿namespace EnigmaVault.SecretService.Api.Dtos.Requests.Secrets
 {
-    public class UpdateFavoriteRequest
-    {
-        [Required]
-        public bool IsFavorite { get; set; }
-    }
+    public sealed record UpdateFavoriteRequest(bool IsFavorite);
 }

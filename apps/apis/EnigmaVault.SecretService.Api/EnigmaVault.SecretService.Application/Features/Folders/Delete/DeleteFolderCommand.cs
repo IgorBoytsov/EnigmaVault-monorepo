@@ -3,8 +3,5 @@ using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Folders.Delete
 {
-    public class DeleteFolderCommand : IRequest<Result>
-    {
-        public int FolderId { get; set; }
-    }
+    public sealed record DeleteFolderCommand(int FolderId) : IRequest<Result>;
 }

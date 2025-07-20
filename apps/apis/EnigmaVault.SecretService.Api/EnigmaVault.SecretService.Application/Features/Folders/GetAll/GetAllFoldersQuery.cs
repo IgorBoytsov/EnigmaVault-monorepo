@@ -2,8 +2,5 @@
 
 namespace EnigmaVault.SecretService.Application.Features.Folders.GetAll
 {
-    public class GetAllFoldersQuery : IRequest<IAsyncEnumerable<FolderDto>>
-    {
-        public int UserId { get; set; }
-    }
+    public sealed record GetAllFoldersQuery(int UserId) : IRequest<IAsyncEnumerable<FolderDto>>;
 }

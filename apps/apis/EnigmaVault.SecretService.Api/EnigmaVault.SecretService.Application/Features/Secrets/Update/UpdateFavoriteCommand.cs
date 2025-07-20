@@ -3,10 +3,5 @@ using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 {
-    public class UpdateFavoriteCommand : IRequest<Result<DateTime>>
-    {
-        public int IdSecret { get; set; }
-
-        public bool IsFavorite { get; set; }
-    }
+    public sealed record UpdateFavoriteCommand(int IdSecret, bool IsFavorite) : IRequest<Result<DateTime>>;
 }

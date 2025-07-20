@@ -3,9 +3,5 @@ using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 {
-    public class UpdateSecretFolderCommand : IRequest<Result>
-    {
-        public int IdSecret { get; set; }
-        public int? IdFolder { get; set; }
-    }
+    public sealed record UpdateSecretFolderCommand(int IdSecret, int? IdFolder) : IRequest<Result>;
 }

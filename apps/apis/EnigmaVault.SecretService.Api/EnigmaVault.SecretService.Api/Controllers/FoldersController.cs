@@ -13,7 +13,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
 {
     [Route("api/folders")]
     [ApiController]
-    public class FoldersController : ControllerBase
+    public sealed class FoldersController : ControllerBase
     {
         private readonly IMediator _mediator;
 
@@ -47,11 +47,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [HttpPut("{id}/name")]
         public async Task<IActionResult> UpdateName([FromRoute] int id, [FromBody] UpdateFolderRequest request)
         {
-            var command = new UpdateFolderCommand
-            {
-                IdFolder = id,
-                Name = request.Name,
-            };
+            var command = new UpdateFolderCommand(id, request.Name);
 
             var result = await _mediator.Send(command);
 
@@ -72,10 +68,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var command = new DeleteFolderCommand
-            {
-                FolderId = id,
-            };
+            var command = new DeleteFolderCommand(id);
 
             var result = await _mediator.Send(command);
             if (!result.IsSuccess)

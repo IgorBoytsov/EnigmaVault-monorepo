@@ -7,7 +7,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
 {
     [Route("api/icon-category")]
     [ApiController]
-    public class IconCategoryController : ControllerBase
+    public sealed class IconCategoryController : ControllerBase
     {
         private readonly IMediator _mediator;
 
