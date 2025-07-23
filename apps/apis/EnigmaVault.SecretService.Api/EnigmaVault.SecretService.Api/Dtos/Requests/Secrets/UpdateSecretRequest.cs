@@ -5,7 +5,7 @@
         string? Url, 
         bool? IsFavorite,
         string? Note,
-        string EncryptedData,
-        string Nonce,
+        byte[] EncryptedData,
+        byte[] Nonce,
         int SchemaVersion);
 }

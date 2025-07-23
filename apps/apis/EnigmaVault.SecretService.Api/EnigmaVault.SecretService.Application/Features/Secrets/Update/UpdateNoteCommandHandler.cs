@@ -1,16 +1,27 @@
-﻿using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+﻿using EnigmaVault.SecretService.Application.Abstractions.Common;
+using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+using EnigmaVault.SecretService.Application.Helpers;
 using EnigmaVault.SecretService.Domain.Enums;
 using EnigmaVault.SecretService.Domain.Results;
 using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 {
-    public class UpdateNoteCommandHandler(ISecretRepository secretRepository) : IRequestHandler<UpdateNoteCommand, Result<DateTime>>
+    public sealed class UpdateNoteCommandHandler(ISecretRepository secretRepository, IValidationService validator) : IRequestHandler<UpdateNoteCommand, Result<DateTime>>
     {
         private readonly ISecretRepository _secretRepository = secretRepository;
+        private readonly IValidationService _validator = validator;
 
         public async Task<Result<DateTime>> Handle(UpdateNoteCommand request, CancellationToken cancellationToken)
         {
+            if (RequestGuard.TryGetFailureResult<UpdateNoteCommand, DateTime>(request, out var nullFailureResult))
+                return nullFailureResult;
+
+            var validationResult = await _validator.ValidateAsync(request);
+
+            if (ValidationGuard.TryGetFailureResult<DateTime>(validationResult, out var validationFailureResult))
+                return validationFailureResult;
+
             var storage = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
 
             if (storage is null)

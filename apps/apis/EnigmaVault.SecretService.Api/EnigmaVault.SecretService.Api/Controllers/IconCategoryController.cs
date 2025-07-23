@@ -17,6 +17,6 @@ namespace EnigmaVault.SecretService.Api.Controllers
         }
 
         [HttpGet("get-all")]
-        public Task<IAsyncEnumerable<IconCategoryDto>> GetAll(CancellationToken cancellationToken) => _mediator.Send(new GetAllIconCategoriesQuery(), cancellationToken);
+        public IAsyncEnumerable<IconCategoryDto> GetAll(CancellationToken cancellationToken) => _mediator.CreateStream(new GetAllIconCategoriesQuery(), cancellationToken);
     }
 }

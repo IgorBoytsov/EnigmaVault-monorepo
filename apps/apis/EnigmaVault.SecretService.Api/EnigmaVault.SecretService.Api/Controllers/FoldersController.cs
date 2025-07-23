@@ -1,4 +1,5 @@
 ﻿using EnigmaVault.SecretService.Api.Dtos.Requests.Folders;
+using EnigmaVault.SecretService.Application.Abstractions.Common;
 using EnigmaVault.SecretService.Application.Features.Folders;
 using EnigmaVault.SecretService.Application.Features.Folders.Create;
 using EnigmaVault.SecretService.Application.Features.Folders.Delete;
@@ -8,6 +9,7 @@ using EnigmaVault.SecretService.Domain.Enums;
 using EnigmaVault.SecretService.Domain.Results;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace EnigmaVault.SecretService.Api.Controllers
 {
@@ -16,10 +18,12 @@ namespace EnigmaVault.SecretService.Api.Controllers
     public sealed class FoldersController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IValidationService _validator;
 
-        public FoldersController(IMediator mediator)
+        public FoldersController(IMediator mediator, IValidationService validator)
         {
             _mediator = mediator;
+            _validator = validator;
         }
 
         /*--Create----------------------------------------------------------------------------------------*/
@@ -27,23 +31,33 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [HttpPost("create")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateSecret([FromBody] CreateFolderCommand command)
+        public async Task<IActionResult> Create([FromBody] CreateFolderRequest request)
         {
+            var command = new CreateFolderCommand(request.UserId, request.FolderName);
+
             Result<FolderDto> result = await _mediator.Send(command);
 
             if (result.IsSuccess)
                 return StatusCode(StatusCodes.Status201Created, result.Value);
             else
-                return BadRequest(result.Errors);
+            {
+                var sb = new StringBuilder();
+
+                foreach (var item in result.Errors)
+                    sb.Append(item.Description);
+
+                return BadRequest(sb.ToString());
+            }
+                
         }
 
         /*--Get-------------------------------------------------------------------------------------------*/
 
         [HttpGet("get-all")]
-        public Task<IAsyncEnumerable<FolderDto>> GetAll([FromQuery] GetAllFoldersQuery query, CancellationToken cancellationToken) => _mediator.Send(query, cancellationToken);
+        public IAsyncEnumerable<FolderDto> GetAll([FromQuery] GetAllFoldersQuery query, CancellationToken cancellationToken) => _mediator.CreateStream(query, cancellationToken);
 
         /*--Update----------------------------------------------------------------------------------------*/
-        
+
         [HttpPut("{id}/name")]
         public async Task<IActionResult> UpdateName([FromRoute] int id, [FromBody] UpdateFolderRequest request)
         {
@@ -53,8 +67,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
 
             if (!result.IsSuccess)
             {
-                var notFoundCode = result.Errors.FirstOrDefault(error => error.Code == ErrorCode.NotFound);
-                if (notFoundCode != null)
+                if (result.Errors.Any(e => e.Code == ErrorCode.NotFound))
                     return NotFound(result.Errors);
 
                 return BadRequest(result.Errors);

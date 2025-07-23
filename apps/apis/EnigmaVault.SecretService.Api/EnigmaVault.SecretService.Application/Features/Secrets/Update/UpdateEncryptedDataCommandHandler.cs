@@ -1,32 +1,26 @@
-﻿using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+﻿using EnigmaVault.SecretService.Application.Abstractions.Common;
+using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+using EnigmaVault.SecretService.Application.Helpers;
 using EnigmaVault.SecretService.Domain.Enums;
 using EnigmaVault.SecretService.Domain.Results;
 using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 {
-    public class UpdateEncryptedDataCommandHandler(ISecretRepository secretRepository) : IRequestHandler<UpdateEncryptedDataCommand, Result<DateTime>>
+    public sealed class UpdateEncryptedDataCommandHandler(ISecretRepository secretRepository, IValidationService validator) : IRequestHandler<UpdateEncryptedDataCommand, Result<DateTime>>
     {
         private readonly ISecretRepository _secretRepository = secretRepository;
+        private readonly IValidationService _validator = validator;
 
         public async Task<Result<DateTime>> Handle(UpdateEncryptedDataCommand request, CancellationToken cancellationToken)
         {
-            var errors = new List<Error>();
+            if (RequestGuard.TryGetFailureResult<UpdateEncryptedDataCommand, DateTime>(request, out var nullFailureResult))
+                return nullFailureResult;
 
-            if (request is null)
-                return Result<DateTime>.Failure(new Error(ErrorCode.NullValue, $"Команда была пустая"));
+            var validationResult = await _validator.ValidateAsync(request);
 
-            if (request.EncryptedData is null)
-                errors.Add(new Error(ErrorCode.Empty, $"Не были указаны зашифрованные данные."));
-
-            if (request.Nonce is null)
-                errors.Add(new Error(ErrorCode.Empty, $"Не были указан Nonce."));
-
-            if (request.SchemaVersion <= 0)
-                errors.Add(new Error(ErrorCode.Empty, $"Версия схемы указа не корректно. Самая минимальная версия (1)."));
-
-            if (errors.Any())
-                return Result<DateTime>.Failure(errors);
+            if (ValidationGuard.TryGetFailureResult<DateTime>(validationResult, out var validationFailureResult))
+                return validationFailureResult;
 
             var storage = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
 

@@ -26,8 +26,11 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [HttpPost("create")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Create([FromBody] CreateIconCommand command)
+        public async Task<IActionResult> Create([FromBody] CreateIconRequest request)
         {
+
+            var command = new CreateIconCommand(request.IdUser, request.SvgCode, request.IconName, false);
+
             Result<IconDto> result = await _mediator.Send(command);
 
             if (result.IsSuccess)
@@ -39,7 +42,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
         /*--Get-------------------------------------------------------------------------------------------*/
         
         [HttpGet("get-all")]
-        public Task<IAsyncEnumerable<IconDto>> GetAll([FromQuery] GetAllIconsQuery query, CancellationToken cancellationToken) => _mediator.Send(query, cancellationToken);
+        public IAsyncEnumerable<IconDto> GetAll([FromQuery] GetAllIconsQuery query, CancellationToken cancellationToken) => _mediator.CreateStream(query, cancellationToken);
 
         /*--Update----------------------------------------------------------------------------------------*/
 

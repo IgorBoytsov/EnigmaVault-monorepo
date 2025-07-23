@@ -29,8 +29,10 @@ namespace EnigmaVault.SecretService.Api.Controllers
         [HttpPost("create")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateSecret([FromBody] CreateSecretCommand command)
+        public async Task<IActionResult> CreateSecret([FromBody] CreateSecretRequest request)
         {
+            var command = new CreateSecretCommand(request.IdUser, request.EncryptedData, request.Nonce, request.ServiceName, request.Url, request.Notes, request.SvgIcon, request.SchemaVersion, request.IsFavorite);
+
             Result<SecretDto> result = await _mediator.Send(command);
 
             if (result.IsSuccess)
@@ -42,7 +44,7 @@ namespace EnigmaVault.SecretService.Api.Controllers
         /*--Get-------------------------------------------------------------------------------------------*/
 
         [HttpGet("get-all")]
-        public Task<IAsyncEnumerable<SecretDto>> GetAll([FromQuery] GetAllSecretsQuery query, CancellationToken cancellationToken) => _mediator.Send(query, cancellationToken);
+        public IAsyncEnumerable<SecretDto> GetAll([FromQuery] GetAllSecretsQuery query, CancellationToken cancellationToken) => _mediator.CreateStream(query, cancellationToken);
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(SecretDto), StatusCodes.Status200OK)]

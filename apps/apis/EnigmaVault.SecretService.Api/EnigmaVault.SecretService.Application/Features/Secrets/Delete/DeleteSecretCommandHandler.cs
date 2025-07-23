@@ -1,18 +1,30 @@
 ﻿using EnigmaVault.SecretService.Application.Abstractions;
+using EnigmaVault.SecretService.Application.Abstractions.Common;
 using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+using EnigmaVault.SecretService.Application.Features.Icons;
+using EnigmaVault.SecretService.Application.Helpers;
 using EnigmaVault.SecretService.Domain.Enums;
 using EnigmaVault.SecretService.Domain.Results;
 using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Delete
 {
-    public class DeleteSecretCommandHandler(ISecretRepository secretRepository, IUnitOfWork unitOfWork) : IRequestHandler<DeleteSecretCommand, Result>
+    public sealed class DeleteSecretCommandHandler(ISecretRepository secretRepository, IUnitOfWork unitOfWork, IValidationService validator) : IRequestHandler<DeleteSecretCommand, Result>
     {
         private readonly ISecretRepository _secretRepository = secretRepository;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly IValidationService _validator = validator;
 
         public async Task<Result> Handle(DeleteSecretCommand request, CancellationToken cancellationToken)
         {
+            if (RequestGuard.TryGetFailureResult<DeleteSecretCommand>(request, out var nullFailureResult))
+                return nullFailureResult;
+
+            var validationResult = await _validator.ValidateAsync(request);
+
+            if (ValidationGuard.TryGetFailureResult<IconDto>(validationResult, out var validationFailureResult))
+                return validationFailureResult;
+
             var domain = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
 
             if (domain == null)

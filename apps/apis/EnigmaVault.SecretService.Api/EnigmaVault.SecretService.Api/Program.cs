@@ -1,8 +1,11 @@
+using EnigmaVault.SecretService.Api.Services.Implementations;
 using EnigmaVault.SecretService.Application.Abstractions;
+using EnigmaVault.SecretService.Application.Abstractions.Common;
 using EnigmaVault.SecretService.Application.Abstractions.Repositories;
 using EnigmaVault.SecretService.Infrastructure;
 using EnigmaVault.SecretService.Infrastructure.Data;
 using EnigmaVault.SecretService.Infrastructure.Ioc;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace EnigmaVault.SecretService.Api
@@ -21,6 +24,10 @@ namespace EnigmaVault.SecretService.Api
 
             builder.Services.AddMediatR(cfg =>
                 cfg.RegisterServicesFromAssembly(typeof(ISecretRepository).Assembly));
+
+            builder.Services.AddScoped<IValidationService, ValidationService>();
+            builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+            builder.Services.AddValidatorsFromAssembly(typeof(IValidationService).Assembly); //Application
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 

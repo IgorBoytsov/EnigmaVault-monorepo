@@ -3,7 +3,7 @@ using EnigmaVault.SecretService.Domain.Exceptions.Icons;
 
 namespace EnigmaVault.SecretService.Domain.DomainModels
 {
-    public class IconDomain
+    public sealed class IconDomain
     {
         private IconDomain()
         {

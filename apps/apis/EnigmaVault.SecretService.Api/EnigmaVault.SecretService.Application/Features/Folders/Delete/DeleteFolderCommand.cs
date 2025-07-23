@@ -1,7 +1,8 @@
-﻿using EnigmaVault.SecretService.Domain.Results;
+﻿using EnigmaVault.SecretService.Application.Features.Folders.Validators.Abstractions;
+using EnigmaVault.SecretService.Domain.Results;
 using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Folders.Delete
 {
-    public sealed record DeleteFolderCommand(int FolderId) : IRequest<Result>;
+    public sealed record DeleteFolderCommand(int IdFolder) : IRequest<Result>, IIdFolderValidator;
 }

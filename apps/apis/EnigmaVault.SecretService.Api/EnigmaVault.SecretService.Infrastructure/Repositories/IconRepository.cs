@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 
 namespace EnigmaVault.SecretService.Infrastructure.Repositories
 {
-    internal class IconRepository(SecretDBContext context, IEntityUpdater entityUpdater) : IIconRepository
+    internal sealed class IconRepository(SecretDBContext context, IEntityUpdater entityUpdater) : IIconRepository
     {
         private readonly SecretDBContext _context = context;
         private readonly IEntityUpdater _entityUpdater = entityUpdater;
@@ -51,7 +51,7 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
                 yield return dto;
         }
 
-        public async Task<IconDomain?> GetById(int idUser, int idIcon)
+        public async Task<IconDomain?> GetByIdAsync(int idUser, int idIcon)
         {
             var entity = await _context.Icons.FirstOrDefaultAsync(i => i.IdUser == idUser && i.IdIcon == idIcon);
 

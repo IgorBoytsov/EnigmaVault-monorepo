@@ -14,6 +14,6 @@ namespace EnigmaVault.SecretService.Application.Abstractions.Repositories
         Task<Result> UpdateName(UpdateFolderCommand command);
         Task<Result> Delete(DeleteFolderCommand command);
         Task<bool> ExistSecretsInFolder(int folderId);
-        Task<bool> Exist(int folderId);
+        Task<bool> ExistAsync(int folderId);
     }
 }

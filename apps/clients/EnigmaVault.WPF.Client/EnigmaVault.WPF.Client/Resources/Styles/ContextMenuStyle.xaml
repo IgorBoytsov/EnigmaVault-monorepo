@@ -23,7 +23,7 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="23" SharedSizeGroup="Icon" />
-                                <ColumnDefinition Width="Auto" MinWidth="100" />
+                                <ColumnDefinition Width="*" MinWidth="100" />
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut" />
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="SubmenuIndicator" />
                             </Grid.ColumnDefinitions>

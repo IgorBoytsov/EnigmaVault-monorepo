@@ -1,26 +1,26 @@
-﻿using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+﻿using EnigmaVault.SecretService.Application.Abstractions.Common;
+using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+using EnigmaVault.SecretService.Application.Helpers;
 using EnigmaVault.SecretService.Domain.Enums;
 using EnigmaVault.SecretService.Domain.Results;
 using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 {
-    public class UpdateMetadataCommandHandler(ISecretRepository secretRepository) : IRequestHandler<UpdateMetadataCommand, Result<DateTime>>
+    public sealed class UpdateMetadataCommandHandler(ISecretRepository secretRepository, IValidationService validator) : IRequestHandler<UpdateMetadataCommand, Result<DateTime>>
     {
         private readonly ISecretRepository _secretRepository = secretRepository;
+        private readonly IValidationService _validator = validator;
 
         public async Task<Result<DateTime>> Handle(UpdateMetadataCommand request, CancellationToken cancellationToken)
         {
-            var errors = new List<Error>();
+            if (RequestGuard.TryGetFailureResult<UpdateMetadataCommand, DateTime>(request, out var nullFailureResult))
+                return nullFailureResult;
 
-            if (request is null)
-                return Result<DateTime>.Failure(new Error(ErrorCode.NullValue, $"Значение {nameof(request)} было пустым"));
+            var validationResult = await _validator.ValidateAsync(request);
 
-            if (string.IsNullOrWhiteSpace(request.ServiceName))
-                errors.Add(new Error(ErrorCode.Empty, $"Не было указано название записи."));
-
-            if (errors.Any())
-                return Result<DateTime>.Failure(errors);
+            if (ValidationGuard.TryGetFailureResult<DateTime>(validationResult, out var validationFailureResult))
+                return validationFailureResult;
 
             var storage = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
 

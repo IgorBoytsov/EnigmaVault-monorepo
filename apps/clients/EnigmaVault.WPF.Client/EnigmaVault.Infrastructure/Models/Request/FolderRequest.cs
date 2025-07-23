@@ -2,7 +2,7 @@
 {
     internal class FolderRequest
     {
-        public int IdUser { get; set; }
+        public int UserId { get; set; }
 
         public string FolderName { get; set; }
     }

@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace EnigmaVault.SecretService.Infrastructure.Repositories
 {
-    internal class IconCategoryRepository(SecretDBContext context) : IIconCategoryRepository
+    internal sealed class IconCategoryRepository(SecretDBContext context) : IIconCategoryRepository
     {
         private readonly SecretDBContext _context = context;
 

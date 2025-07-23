@@ -1,24 +1,25 @@
-﻿using EnigmaVault.SecretService.Application.Abstractions.Repositories;
-using EnigmaVault.SecretService.Domain.Enums;
+﻿using EnigmaVault.SecretService.Application.Abstractions.Common;
+using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+using EnigmaVault.SecretService.Application.Helpers;
 using EnigmaVault.SecretService.Domain.Results;
 using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Folders.Update
 {
-    public class UpdateFolderCommandHandler(IFolderRepository folderRepository) : IRequestHandler<UpdateFolderCommand, Result>
+    public sealed class UpdateFolderCommandHandler(IFolderRepository folderRepository, IValidationService validator) : IRequestHandler<UpdateFolderCommand, Result>
     {
         private readonly IFolderRepository _folderRepository = folderRepository;
+        private readonly IValidationService _validator = validator;
 
         public async Task<Result> Handle(UpdateFolderCommand request, CancellationToken cancellationToken)
         {
-            if (request == null)
-                return Result.Failure(new Error(ErrorCode.NullValue, $"Команда {nameof(UpdateFolderCommand)} была с значением null"));
+            if (RequestGuard.TryGetFailureResult<UpdateFolderCommand>(request, out var nullFailureResult))
+                return nullFailureResult;
 
-            if (string.IsNullOrWhiteSpace(request.Name))
-                return Result.Failure(new Error(ErrorCode.Empty, "Название папки не было указано"));
+            var validationResult = await _validator.ValidateAsync(request);
 
-            if(!await _folderRepository.Exist(request.IdFolder))
-                return Result.Failure(new Error(ErrorCode.NotFound, $"Папка с именем {request.Name} не найдена. Возможно она удалена. Перезапустите приложение."));
+            if (ValidationGuard.TryGetFailureResult(validationResult, out var failureResult))
+                return failureResult;
 
             var result = await _folderRepository.UpdateName(request);
 

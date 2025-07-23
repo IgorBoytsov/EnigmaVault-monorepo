@@ -9,7 +9,7 @@ namespace EnigmaVault.SecretService.Application.Abstractions.Repositories
     {
         Task<Result<IconDomain>> CreateAsync(IconDomain icon);
         IAsyncEnumerable<IconDto> GetAllStreamingAsync(int? idUser, [EnumeratorCancellation] CancellationToken cancellationToken = default);
-        Task<IconDomain?> GetById(int idUser, int idIcon);
+        Task<IconDomain?> GetByIdAsync(int idUser, int idIcon);
         Task<Result> UpdateIconAsync(IconDomain icon);
     }
 }

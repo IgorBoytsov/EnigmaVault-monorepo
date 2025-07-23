@@ -2,7 +2,7 @@
 
 namespace EnigmaVault.SecretService.Application.Features.IconCategories.GetAll
 {
-    public record GetAllIconCategoriesQuery() : IRequest<IAsyncEnumerable<IconCategoryDto>>
+    public record GetAllIconCategoriesQuery() : IStreamRequest<IconCategoryDto>
     {
     }
 }

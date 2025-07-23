@@ -8,13 +8,13 @@ using EnigmaVault.SecretService.Domain.Results;
 using EnigmaVault.SecretService.Infrastructure.Data;
 using EnigmaVault.SecretService.Infrastructure.Data.Entities;
 using EnigmaVault.SecretService.Infrastructure.Services.Abstractions;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace EnigmaVault.SecretService.Infrastructure.Repositories
 {
-    internal class FolderRepository(SecretDBContext context, IEntityUpdater entityUpdater) : IFolderRepository
+    internal sealed class FolderRepository(SecretDBContext context, IEntityUpdater entityUpdater) : IFolderRepository
     {
         private readonly SecretDBContext _context = context;
         private readonly IEntityUpdater _entityUpdater = entityUpdater;
@@ -70,21 +70,21 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
             => await _entityUpdater.UpdatePropertyAsync<Folder>(
                 predicate: folder => folder.IdFolder == command.IdFolder,
                 setPropertyCalls: f => f
-                    .SetProperty(p => p.FolderName, command.Name));
+                    .SetProperty(p => p.FolderName, command.FolderName));
 
         /*--Delete----------------------------------------------------------------------------------------*/
 
         public async Task<Result> Delete(DeleteFolderCommand command)
         {
-            if (await ExistSecretsInFolder(command.FolderId))
+            if (await ExistSecretsInFolder(command.IdFolder))
             {
                 await _entityUpdater.UpdatePropertyAsync<Secret>(
-                predicate: secret => secret.IdFolder == command.FolderId,
+                predicate: secret => secret.IdFolder == command.IdFolder,
                 setPropertyCalls: s => s
                     .SetProperty(p => p.IdFolder, (int?)null));
             }
 
-            var deleteResult = await _context.Folders.Where(f => f.IdFolder == command.FolderId).ExecuteDeleteAsync();
+            var deleteResult = await _context.Folders.Where(f => f.IdFolder == command.IdFolder).ExecuteDeleteAsync();
 
             if (deleteResult > 0)
                 return Result.Success();
@@ -96,6 +96,6 @@ namespace EnigmaVault.SecretService.Infrastructure.Repositories
 
         public async Task<bool> ExistSecretsInFolder(int folderId) => await _context.Secrets.AnyAsync(s => s.IdFolder == folderId);
 
-        public async Task<bool> Exist(int folderId) => await _context.Folders.AnyAsync(s => s.IdFolder == folderId);
+        public async Task<bool> ExistAsync(int folderId) => await _context.Folders.AnyAsync(s => s.IdFolder == folderId);
     }
 }

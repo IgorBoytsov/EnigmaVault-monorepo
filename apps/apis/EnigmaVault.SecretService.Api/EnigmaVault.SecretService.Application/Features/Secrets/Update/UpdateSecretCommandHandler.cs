@@ -1,16 +1,27 @@
-﻿using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+﻿using EnigmaVault.SecretService.Application.Abstractions.Common;
+using EnigmaVault.SecretService.Application.Abstractions.Repositories;
+using EnigmaVault.SecretService.Application.Helpers;
 using EnigmaVault.SecretService.Domain.Enums;
 using EnigmaVault.SecretService.Domain.Results;
 using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
 {
-    public class UpdateSecretCommandHandler(ISecretRepository secretRepository) : IRequestHandler<UpdateSecretCommand, Result<DateTime>>
+    public sealed class UpdateSecretCommandHandler(ISecretRepository secretRepository, IValidationService validator) : IRequestHandler<UpdateSecretCommand, Result<DateTime>>
     {
         private readonly ISecretRepository _secretRepository = secretRepository;
+        private readonly IValidationService _validator = validator;
 
         public async Task<Result<DateTime>> Handle(UpdateSecretCommand request, CancellationToken cancellationToken)
         {
+            if (RequestGuard.TryGetFailureResult<UpdateSecretCommand, DateTime>(request, out var nullFailureResult))
+                return nullFailureResult;
+
+            var validationResult = await _validator.ValidateAsync(request);
+
+            if (ValidationGuard.TryGetFailureResult<DateTime>(validationResult, out var validationFailureResult))
+                return validationFailureResult;
+
             var secret = await _secretRepository.GetByIdAsync(request.IdSecret, cancellationToken);
 
             if (secret is null)
@@ -19,7 +30,7 @@ namespace EnigmaVault.SecretService.Application.Features.Secrets.Update
             secret.UpdateNote(request.Note);
             secret.UpdateMetadata(request.ServiceName ?? secret.ServiceName, request.Url);
             secret.UpdateFavoriteStatus(request.IsFavorite!.Value);
-            secret.UpdateEncryptedPayload(Convert.FromBase64String(request.EncryptedData!), Convert.FromBase64String(request.Nonce!), request.SchemaVersion!.Value);
+            secret.UpdateEncryptedPayload(request.EncryptedData!, request.Nonce!, request.SchemaVersion);
 
             var result = await _secretRepository.UpdateAsync(secret);
 

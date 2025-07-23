@@ -43,7 +43,7 @@ namespace EnigmaVault.Infrastructure.Repositories
 
                 var folderRequest = new FolderRequest()
                 {
-                    IdUser = folder.IdUser,
+                    UserId = folder.IdUser,
                     FolderName = folder.FolderName,
                 };
 

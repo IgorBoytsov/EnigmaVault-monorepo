@@ -6,6 +6,8 @@
         UnknownError,
         NullValue,
         Empty,
+        Validation,
+
         NotFound,
 
         ConcurrencyError,

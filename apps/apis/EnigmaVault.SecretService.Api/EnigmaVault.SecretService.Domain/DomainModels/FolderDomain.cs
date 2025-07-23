@@ -1,6 +1,6 @@
 ﻿namespace EnigmaVault.SecretService.Domain.DomainModels
 {
-    public class FolderDomain
+    public sealed class FolderDomain
     {
         private FolderDomain() { }
 

@@ -1,8 +1,7 @@
-﻿using MediatR;
+﻿using EnigmaVault.SecretService.Application.Features.SharedValidator.Abstractions;
+using MediatR;
 
 namespace EnigmaVault.SecretService.Application.Features.Icons.GetAll
 {
-    public record GetAllIconsQuery(int? IdUser) : IRequest<IAsyncEnumerable<IconDto>>
-    {
-    }
+    public record GetAllIconsQuery(int? IdUser) : IStreamRequest<IconDto>, IMayHaveUser;
 }
